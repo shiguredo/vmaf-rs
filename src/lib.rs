@@ -1,0 +1,361 @@
+//! [libvmaf] 映像品質メトリクス VMAF の Rust バインディング
+//!
+//! [libvmaf]: https://github.com/Netflix/vmaf
+#![warn(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+
+use std::{ffi::CStr, ffi::c_int, mem::MaybeUninit, ptr};
+
+mod sys;
+
+/// リンクされている libvmaf ライブラリのバージョン文字列を返す
+///
+/// # Panics
+///
+/// `vmaf_version()` が不正な UTF-8 を返した場合にパニックする。
+/// libvmaf のバージョン文字列は常に ASCII であるため、通常は発生しない
+pub fn version() -> &'static str {
+    unsafe {
+        CStr::from_ptr(sys::vmaf_version())
+            .to_str()
+            .expect("vmaf_version() returned invalid UTF-8")
+    }
+}
+
+/// ビルド時に参照したリポジトリ URL
+pub const BUILD_REPOSITORY: &str = sys::BUILD_METADATA_REPOSITORY;
+
+/// ビルド時に参照したリポジトリのバージョン（タグ）
+pub const BUILD_VERSION: &str = sys::BUILD_METADATA_VERSION;
+
+/// libvmaf に組み込まれた VMAF モデル
+///
+/// libvmaf ヘッダにはモデル一覧 API がないため、Rust 側で定数化している。
+/// 根拠: Netflix/vmaf `libvmaf/src/model.c` の `built_in_models` 配列
+/// （将来 libvmaf の更新で変更される可能性がある）
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BuiltinModel {
+    /// デフォルトモデル (vmaf_v0.6.1)
+    V061,
+    /// ブートストラップモデル (vmaf_b_v0.6.3)
+    BV063,
+    /// NEG モードモデル (vmaf_v0.6.1neg)
+    V061Neg,
+    /// 4K 向けモデル (vmaf_4k_v0.6.1)
+    V4k061,
+}
+
+impl BuiltinModel {
+    fn version_str(self) -> &'static str {
+        match self {
+            Self::V061 => "vmaf_v0.6.1",
+            Self::BV063 => "vmaf_b_v0.6.3",
+            Self::V061Neg => "vmaf_v0.6.1neg",
+            Self::V4k061 => "vmaf_4k_v0.6.1",
+        }
+    }
+}
+
+/// エラー
+#[derive(Debug)]
+pub struct Error {
+    code: c_int,
+    function: &'static str,
+}
+
+impl Error {
+    fn check(code: c_int, function: &'static str) -> Result<(), Self> {
+        if code == 0 {
+            Ok(())
+        } else {
+            Err(Self { code, function })
+        }
+    }
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}() failed: code={}", self.function, self.code)
+    }
+}
+
+impl std::error::Error for Error {}
+
+/// VMAF コンテキストの設定
+#[derive(Debug, Clone)]
+pub struct ContextConfig {
+    /// ログレベル (デフォルト: エラーのみ)
+    pub log_level: LogLevel,
+    /// 並列スレッド数 (デフォルト: 0 = libvmaf が自動決定)
+    pub n_threads: u32,
+    /// N フレームごとにスコアを計算する (デフォルト: 1 = 全フレーム)
+    pub n_subsample: u32,
+}
+
+impl ContextConfig {
+    /// デフォルト設定で `ContextConfig` を生成する
+    pub fn new() -> Self {
+        Self {
+            log_level: LogLevel::Error,
+            n_threads: 0,
+            n_subsample: 1,
+        }
+    }
+}
+
+impl Default for ContextConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// ログレベル
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LogLevel {
+    /// ログ出力なし
+    None,
+    /// エラーのみ
+    Error,
+    /// 警告以上
+    Warning,
+    /// 情報以上
+    Info,
+    /// デバッグ
+    Debug,
+}
+
+impl LogLevel {
+    fn to_sys(self) -> sys::VmafLogLevel {
+        match self {
+            Self::None => sys::VmafLogLevel_VMAF_LOG_LEVEL_NONE,
+            Self::Error => sys::VmafLogLevel_VMAF_LOG_LEVEL_ERROR,
+            Self::Warning => sys::VmafLogLevel_VMAF_LOG_LEVEL_WARNING,
+            Self::Info => sys::VmafLogLevel_VMAF_LOG_LEVEL_INFO,
+            Self::Debug => sys::VmafLogLevel_VMAF_LOG_LEVEL_DEBUG,
+        }
+    }
+}
+
+/// VMAF 計算コンテキスト
+pub struct Context {
+    inner: *mut sys::VmafContext,
+}
+
+impl Context {
+    /// 設定をもとに VMAF コンテキストを生成する
+    pub fn new(config: ContextConfig) -> Result<Self, Error> {
+        let cfg = sys::VmafConfiguration {
+            log_level: config.log_level.to_sys(),
+            n_threads: config.n_threads,
+            n_subsample: config.n_subsample,
+            cpumask: 0,
+            gpumask: 0,
+        };
+
+        let mut inner = ptr::null_mut();
+        Error::check(unsafe { sys::vmaf_init(&mut inner, cfg) }, "vmaf_init")?;
+
+        Ok(Self { inner })
+    }
+
+    /// モデルに必要な feature extractor を登録する
+    pub fn use_model(&mut self, model: &Model) -> Result<(), Error> {
+        Error::check(
+            unsafe { sys::vmaf_use_features_from_model(self.inner, model.inner) },
+            "vmaf_use_features_from_model",
+        )
+    }
+
+    /// 参照 / 劣化フレームのペアを読み込む
+    ///
+    /// `reference` と `distorted` の両方が `None` の場合、内部バッファをフラッシュする。
+    /// フラッシュ後はこれ以上 `read_pictures` を呼び出せない。
+    ///
+    /// 成功した場合のみ libvmaf が `Picture` の所有権を取得する。エラーを返した場合は
+    /// libvmaf 側で unref されないため、渡した `Picture` が drop 時に破棄され、リークを防ぐ。
+    pub fn read_pictures(
+        &mut self,
+        mut reference: Option<Picture>,
+        mut distorted: Option<Picture>,
+        index: u32,
+    ) -> Result<(), Error> {
+        // 所有権移譲は FFI 成功後に行う (ここで owned を false にするとエラー時にリークする)
+        let ref_ptr = reference
+            .as_mut()
+            .map(|pic| &mut pic.inner as *mut _)
+            .unwrap_or(ptr::null_mut());
+        let dist_ptr = distorted
+            .as_mut()
+            .map(|pic| &mut pic.inner as *mut _)
+            .unwrap_or(ptr::null_mut());
+
+        Error::check(
+            unsafe { sys::vmaf_read_pictures(self.inner, ref_ptr, dist_ptr, index) },
+            "vmaf_read_pictures",
+        )?;
+
+        // 成功時は libvmaf が呼び出し元の Picture を unref 済み (構造体は memset 済み) のため、
+        // drop 時の無意味な再 unref を避けるべく所有権を放棄する。
+        if let Some(pic) = reference.as_mut() {
+            pic.owned = false;
+        }
+        if let Some(pic) = distorted.as_mut() {
+            pic.owned = false;
+        }
+        Ok(())
+    }
+
+    /// 指定インデックスの VMAF スコアを取得する
+    pub fn score_at_index(&self, model: &Model, index: u32) -> Result<f64, Error> {
+        let mut score = 0.0;
+        Error::check(
+            unsafe { sys::vmaf_score_at_index(self.inner, model.inner, &mut score, index) },
+            "vmaf_score_at_index",
+        )?;
+        Ok(score)
+    }
+}
+
+impl Drop for Context {
+    fn drop(&mut self) {
+        if !self.inner.is_null() {
+            let _ = unsafe { sys::vmaf_close(self.inner) };
+        }
+    }
+}
+
+/// VMAF モデル
+pub struct Model {
+    inner: *mut sys::VmafModel,
+}
+
+impl Model {
+    /// 組み込みモデルを読み込む
+    pub fn load_builtin(model: BuiltinModel) -> Result<Self, Error> {
+        let version = model.version_str();
+        let version_cstr =
+            std::ffi::CString::new(version).expect("builtin model version must not contain NUL");
+
+        let mut cfg = sys::VmafModelConfig {
+            name: ptr::null(),
+            flags: sys::VmafModelFlags_VMAF_MODEL_FLAGS_DEFAULT as u64,
+        };
+
+        let mut inner = ptr::null_mut();
+        Error::check(
+            unsafe { sys::vmaf_model_load(&mut inner, &mut cfg, version_cstr.as_ptr()) },
+            "vmaf_model_load",
+        )?;
+
+        Ok(Self { inner })
+    }
+}
+
+impl Drop for Model {
+    fn drop(&mut self) {
+        if !self.inner.is_null() {
+            unsafe { sys::vmaf_model_destroy(self.inner) };
+        }
+    }
+}
+
+/// 8-bit I420 ピクセルデータを保持する VMAF ピクチャ
+pub struct Picture {
+    inner: sys::VmafPicture,
+    /// libvmaf に所有権が移譲された場合は false
+    owned: bool,
+}
+
+impl Picture {
+    /// 8-bit I420 ピクセルデータから `Picture` を生成する
+    ///
+    /// `y` / `u` / `v` は密なプレーンである必要がある (Y プレーンの stride は width、
+    /// U / V プレーンの stride は width / 2)。
+    ///
+    /// 幅と高さは偶数である必要がある。奇数寸法は I420 (YUV 4:2:0) の Chroma Subsampling で
+    /// クロマプレーンの端数が切り捨てられ、入力データの取りこぼし（誤ったスコア）を招くため、
+    /// 明示的に拒否する。
+    pub fn from_i420(y: &[u8], u: &[u8], v: &[u8], width: u32, height: u32) -> Result<Self, Error> {
+        // 偶数寸法のみを受理する。偶数なら div_ceil(n, 2) と n/2 (floor) が一致し、
+        // 検証・コピー (copy_plane) ・libvmaf の確保寸法がすべて同一になる。
+        if !width.is_multiple_of(2) || !height.is_multiple_of(2) {
+            return Err(Error {
+                code: -22, // EINVAL
+                function: "Picture::from_i420",
+            });
+        }
+
+        let y_size = (width as usize) * (height as usize);
+        let uv_width = width.div_ceil(2) as usize;
+        let uv_height = height.div_ceil(2) as usize;
+        let uv_size = uv_width * uv_height;
+
+        if y.len() != y_size || u.len() != uv_size || v.len() != uv_size {
+            return Err(Error {
+                code: -22, // EINVAL
+                function: "Picture::from_i420",
+            });
+        }
+
+        let mut inner = MaybeUninit::<sys::VmafPicture>::zeroed();
+        Error::check(
+            unsafe {
+                sys::vmaf_picture_alloc(
+                    inner.as_mut_ptr(),
+                    sys::VmafPixelFormat_VMAF_PIX_FMT_YUV420P,
+                    8,
+                    width,
+                    height,
+                )
+            },
+            "vmaf_picture_alloc",
+        )?;
+
+        let mut inner = unsafe { inner.assume_init() };
+
+        copy_plane(&mut inner, 0, y);
+        copy_plane(&mut inner, 1, u);
+        copy_plane(&mut inner, 2, v);
+
+        Ok(Self { inner, owned: true })
+    }
+}
+
+impl Drop for Picture {
+    fn drop(&mut self) {
+        if self.owned {
+            let _ = unsafe { sys::vmaf_picture_unref(&mut self.inner) };
+        }
+    }
+}
+
+/// libvmaf が確保したピクセルバッファへ密なプレーンデータをコピーする
+fn copy_plane(pic: &mut sys::VmafPicture, plane: usize, src: &[u8]) {
+    let width = pic.w[plane] as usize;
+    let height = pic.h[plane] as usize;
+    if width == 0 || height == 0 {
+        return;
+    }
+
+    let expected_len = width * height;
+    debug_assert!(
+        src.len() >= expected_len,
+        "plane {plane} buffer too small: expected at least {expected_len}, got {}",
+        src.len()
+    );
+
+    let stride = pic.stride[plane] as usize;
+    let dst_ptr = pic.data[plane] as *mut u8;
+    debug_assert!(!dst_ptr.is_null());
+
+    for row in 0..height {
+        let src_row = &src[row * width..(row + 1) * width];
+        let dst_row = unsafe { dst_ptr.add(row * stride) };
+        unsafe {
+            ptr::copy_nonoverlapping(src_row.as_ptr(), dst_row, width);
+            if stride > width {
+                ptr::write_bytes(dst_row.add(width), 0, stride - width);
+            }
+        }
+    }
+}
