@@ -50,7 +50,7 @@ macos-15 でビルドした静的ライブラリ `libvmaf.a` を macos-26 で消
 ## 関連 issue との整合
 
 - 0011（clippy `--all-targets`）が `tests/test_codec_vmaf/` を lint のためにコンパイルする。作業 A と重複するため、重い dev-dependencies ビルドを CI で二重実行しない分担（0011 = lint コンパイル、0012 = 実行系 / prebuilt smoke）を擦り合わせる
-- 0010（pending、prebuilt 経路のサプライチェーン強化）と同じ prebuilt 経路を扱うが、本 issue は「ダウンロード→展開→ビルド成功」という利用者視点の smoke test であり、0010 の検証ロジック改修とは独立に進められる。0010 が pending（着手未定）でも本 issue は待たない
+- 0010（closed、対応見送り。prebuilt 経路のサプライチェーン強化）と同じ prebuilt 経路を扱うが、本 issue は「ダウンロード→展開→ビルド成功」という利用者視点の smoke test であり、0010 の検証ロジック改修とは独立に進められる。0010 は対応見送り（closed）だが本 issue はその判断に関係なく進められる
 - 0006（PBT / fuzzing 導入）の CI 実行分担とも整合させる
 
 ## CHANGES.md

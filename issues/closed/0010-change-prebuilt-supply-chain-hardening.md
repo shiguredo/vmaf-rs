@@ -18,17 +18,6 @@
 
 現状の SHA256 検証（破損検知）で当面十分とする。将来 prebuilt の改竄検知が本当に必要になった場合は、ハッシュ pin ではなく Immutable Releases 有効化 + artifact attestation（sigstore）を起点に再検討する。なお tar 展開の path traversal / symlink 検査（`0010:46-48`）はサプライチェーン議論とは独立して意味があるため、必要なら別 issue として切り出す。
 
-## pending にした理由
-
-本 issue は確定していない設計判断と外部依存追加を複数伴うため、AGENTS.md「外部依存の追加や設計判断が必要で保留中の issue は `issues/pending/` に置くこと」に従い保留する。確定すべき設計は以下。
-
-1. 完全性検証の方式: 期待ハッシュをソースに pin する方式か、リリース署名（cosign / sigstore など、鍵を別チャネルで管理）か
-2. pin 方式を採る場合の release.yml 改修（後述の chicken-and-egg を解く直列フロー）
-3. tar 展開の安全化に Rust の `tar` crate（build-dependency 追加）を使うか、システム tar + 事前列挙検証にとどめるか
-4. 防御する脅威モデルの確定（GitHub Release アセット単体の差し替えか、リリースパイプライン全体の侵害か）
-
-これらは prebuilt を通る全利用者に影響する設計判断であり、確定後に着手する。ブランチ prefix（`change` か `fix` か）も方式確定後に見直す。
-
 ## 目的
 
 `build.rs` の prebuilt ダウンロード経路は、チェックサムを成果物と同一サーバから取得し、tar 展開と `bindings.rs` の取り込みを無検証で行うため、リリースが侵害された場合に改竄を検出できず任意コード実行の余地がある。検証を強化する。

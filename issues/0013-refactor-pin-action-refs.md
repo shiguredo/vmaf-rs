@@ -42,7 +42,7 @@ CI / Release の設定変更で公開 API・配布物に影響しないため、
 
 ## 関連 issue との整合
 
-- 0010（pending、build.rs の prebuilt ダウンロード経路のハードニング）と同じサプライチェーン強化の思想だが、本 issue の対象は CI のアクション参照で別物
+- 0010（closed、対応見送り。build.rs の prebuilt ダウンロード経路のハードニング）と同じサプライチェーン強化の思想だが、本 issue の対象は CI のアクション参照で別物
 - release.yml で本 issue が触るのは slack_notify ジョブの 1 行（`release.yml:146`）のみ。0004（トップレベル permissions + github-release ジョブ）・0023（トップレベル concurrency + publish ジョブ）とは編集箇所が離れ、行レベルの直接衝突は無い。番号順（0004 → 0011 → 0013 → 0023）で進める
 
 ## 完了条件
