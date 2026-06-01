@@ -16,22 +16,22 @@
 
 ## 現状（行番号は実ファイルと一致を確認済み）
 
-- `release.yml:84`: `OUT_DIR=$(find target/release/build/shiguredo_vmaf-*/out -maxdepth 0 -type d 2>/dev/null | head -1)`。cargo は features / profile / rustflags が変わると別 `shiguredo_vmaf-<hash>` ディレクトリを作り旧 hash を自動削除しないため、target を使い回す環境では複数生成され得る。`find` の出力順は非ソートのため `head -1` が拾うものは不定（build-prebuilt はクリーンランナーで 1 回ビルドのため現実には通常 1 個）
-- `release.yml:91`: `SRC_DIR="$OUT_DIR/build/vmaf/libvmaf/build/src"` が build.rs の `build_from_source`（`build.rs:248-296`、`output_lib_dir = out_dir/build/vmaf/libvmaf/build/src/`、`LIB_NAME` = `vmaf` / `LIBVMAF_DIR` = `libvmaf`）の内部構造を文字列でコピーしている。build.rs の構造が変わると release CI だけ無言で壊れる
+- `release.yml:91`: `OUT_DIR=$(find target/release/build/shiguredo_vmaf-*/out -maxdepth 0 -type d 2>/dev/null | head -1)`。cargo は features / profile / rustflags が変わると別 `shiguredo_vmaf-<hash>` ディレクトリを作り旧 hash を自動削除しないため、target を使い回す環境では複数生成され得る。`find` の出力順は非ソートのため `head -1` が拾うものは不定（build-prebuilt はクリーンランナーで 1 回ビルドのため現実には通常 1 個）
+- `release.yml:98`: `SRC_DIR="$OUT_DIR/build/vmaf/libvmaf/build/src"` が build.rs の `build_from_source`（`build.rs:298-346`、`output_lib_dir = out_dir/build/vmaf/libvmaf/build/src/`、`LIB_NAME` = `vmaf` / `LIBVMAF_DIR` = `libvmaf`）の内部構造を文字列でコピーしている。build.rs の構造が変わると release CI だけ無言で壊れる
 
 ## 設計方針
 
-OUT_DIR 探索（`release.yml:84`）と SRC_DIR からの成果物コピー（`release.yml:91-94`）は同じブロックの同根問題のため、まとめて本 issue で扱う。
+OUT_DIR 探索（`release.yml:91`）と SRC_DIR からの成果物コピー（`release.yml:98-101`）は同じブロックの同根問題のため、まとめて本 issue で扱う。
 
 ### OUT_DIR の特定
 
 `shiguredo_vmaf-*/out` のマッチ件数を数え、**厳密に 1 個でなければ即 fail** する（複数なら fail、0 なら fail）。リリースは配布物を作るため、想定外のビルド状態（複数 out）で mtime 最新を黙って選ぶのは「どのビルドのライブラリを配ったか不定」となりリリース事故になる。「最新を選ぶ」方式は採らない。
 
-より堅牢な代替として、`cargo build --release --features source-build --message-format=json`（`release.yml:78` のビルドステップ）の `build-script-executed` メッセージから `shiguredo_vmaf` の `out_dir` を `jq` で直接取得する方式がある（glob もハッシュ推測も不要）。`jq` 依存とビルドステップ統合のトレードオフがあるが、glob + 件数検証で十分なら前者を採る。どちらを採るか実装時に確定し、glob 方式なら件数検証を必須とする。
+より堅牢な代替として、`cargo build --release --features source-build --message-format=json`（`release.yml:85` のビルドステップ）の `build-script-executed` メッセージから `shiguredo_vmaf` の `out_dir` を `jq` で直接取得する方式がある（glob もハッシュ推測も不要）。`jq` 依存とビルドステップ統合のトレードオフがあるが、glob + 件数検証で十分なら前者を採る。どちらを採るか実装時に確定し、glob 方式なら件数検証を必須とする。
 
 ### SRC_DIR の検証
 
-`SRC_DIR`（`release.yml:91`）から `libvmaf.a` をコピーする前に、`SRC_DIR/libvmaf.a` の存在を確認し、無ければ fail する。build.rs の構造変更で SRC_DIR がずれた場合に無言で壊れず検知できるようにする。
+`SRC_DIR`（`release.yml:98`）から `libvmaf.a` をコピーする前に、`SRC_DIR/libvmaf.a` の存在を確認し、無ければ fail する。build.rs の構造変更で SRC_DIR がずれた場合に無言で壊れず検知できるようにする。
 
 ## CHANGES.md
 
@@ -39,7 +39,7 @@ OUT_DIR 探索（`release.yml:84`）と SRC_DIR からの成果物コピー（`r
 
 ## 関連 issue との整合
 
-本 issue が触るのは build-prebuilt ジョブの `release.yml:80-95`（find_out_dir + アーカイブ作成）のみで、0004（トップレベル permissions + github-release ジョブ）・0013（slack_notify）・0014（publish ジョブ）・0023（トップレベル concurrency + publish/github-release timeout）のいずれとも編集ブロックが重ならず直接衝突しない。0012（prebuilt 経路の smoke test）は同じ build-prebuilt 成果物の正しさを扱うため、本 issue の堅牢化は 0012 の前提を支える。
+本 issue が触るのは build-prebuilt ジョブの `release.yml:87-102`（find_out_dir + アーカイブ作成）のみで、0004（トップレベル permissions + github-release ジョブ）・0013（slack_notify）・0014（publish ジョブ）・0023（トップレベル concurrency + publish/github-release timeout）のいずれとも編集ブロックが重ならず直接衝突しない。0012（prebuilt 経路の smoke test）は同じ build-prebuilt 成果物の正しさを扱うため、本 issue の堅牢化は 0012 の前提を支える。
 
 ## 完了条件
 

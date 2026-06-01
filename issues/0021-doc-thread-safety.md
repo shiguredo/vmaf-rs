@@ -18,7 +18,7 @@
 
 ## 現状
 
-`src/lib.rs:140-142`（`Context` が `*mut sys::VmafContext`）、`src/lib.rs:222-224`（`Model` が `*mut sys::VmafModel`）、`src/lib.rs:257-261`（`Picture` が `VmafPicture` + `owned`）で生ポインタを保持し、自動的に `!Send + !Sync` になる。`Context` は `n_threads`（`src/lib.rs:89`）で内部スレッドプールを起動し得るが、スレッド安全性の前提が doc コメントに示されていない。AGENTS.md「根拠を明記」に照らし不足。
+`src/lib.rs:140-142`（`Context` が `*mut sys::VmafContext`）、`src/lib.rs:228-230`（`Model` が `*mut sys::VmafModel`）、`src/lib.rs:263-267`（`Picture` が `VmafPicture` + `owned`）で生ポインタを保持し、自動的に `!Send + !Sync` になる。`Context` は `n_threads`（`src/lib.rs:90`）で内部スレッドプールを起動し得るが、スレッド安全性の前提が doc コメントに示されていない。AGENTS.md「根拠を明記」に照らし不足。
 
 ## 設計方針
 

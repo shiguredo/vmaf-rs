@@ -19,8 +19,8 @@
 ## 現状
 
 - `src/lib.rs:61-64`: `Error { code: c_int, function: &'static str }` で、libvmaf エラーと自前検証エラーを区別できない
-- `src/lib.rs:67-73`: `Error::check(code, function)` が FFI ラッパ 6 箇所（`vmaf_init` 156, `vmaf_use_features_from_model` 163, `vmaf_read_pictures` 196, `vmaf_score_at_index` 205, `vmaf_model_load` 239, `vmaf_picture_alloc` 281）から使われている
-- `src/lib.rs:273-278`: `from_i420` のサイズ不整合を `Error { code: -22, function: "Picture::from_i420" }` と libvmaf エラーに偽装。`-22`（EINVAL）はプラットフォーム非保証の魔法数で、`function` も実 C 関数名でなくメソッド名
+- `src/lib.rs:67-73`: `Error::check(code, function)` が FFI ラッパ 6 箇所（`vmaf_init` 156, `vmaf_use_features_from_model` 164, `vmaf_read_pictures` 193, `vmaf_score_at_index` 212, `vmaf_model_load` 246, `vmaf_picture_alloc` 303）から使われている
+- `src/lib.rs:293-298`: `from_i420` のサイズ不整合を `Error { code: -22, function: "Picture::from_i420" }` と libvmaf エラーに偽装。`-22`（EINVAL）はプラットフォーム非保証の魔法数で、`function` も実 C 関数名でなくメソッド名
 - `src/lib.rs:76-79`: Display は `code={}` で生の負数を出すだけ。errno であることが伝わらない
 
 ## 設計方針
@@ -62,13 +62,13 @@ libvmaf は **負の** errno（例: `-22` = `-EINVAL`）を返すのに対し `s
 
 ### 魔法数の撤廃
 
-`src/lib.rs:273-278` の `Error { code: -22, ... }` を `Error::InvalidInput("...")` に置き換える。
+`src/lib.rs:293-298` の `Error { code: -22, ... }` を `Error::InvalidInput("...")` に置き換える。
 
 ## 関連 issue との整合
 
 本 issue は複数 issue が「エラー表現は 0016 に委ねる」と参照する結節点である。
 
-- 0002（High、奇数寸法拒否）は `from_i420` の検証エラーを暫定的に `-22` のまま実装する（0002 が明記）。本 issue がその `-22` ブロック（`src/lib.rs:273-278`）を `InvalidInput` に置換する具体的対象
+- 0002（High、奇数寸法拒否）は `from_i420` の検証エラーを暫定的に `-22` のまま実装する（0002 が明記）。本 issue がその `-22` ブロック（`src/lib.rs:293-298`）を `InvalidInput` に置換する具体的対象
 - 0017（Medium、ゼロ寸法拒否、番号は 0016 より後）は 0016 完了後の `InvalidInput` を使う前提
 - 0015（Medium、score_pooled 追加）が先に入ると `score_pooled` の戻り値 `Result<_, Error>` も `Error::check` 経由で本変更の対象に含まれる。どちらが先でも他方のリベースが必要
 - 番号順（0002 → 0015 → 0016 → 0017）で対応すれば整合する

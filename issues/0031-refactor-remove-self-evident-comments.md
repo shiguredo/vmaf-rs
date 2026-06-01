@@ -22,35 +22,35 @@
 
 ### 削除候補（直後のコードと同義の自明なコメント）
 
-- `build.rs:120` `// curl でアーカイブをダウンロード`（直後 `Command::new("curl")`）
-- `build.rs:132` `// curl で SHA256 チェックサムをダウンロード`（直後 curl）
-- `build.rs:143` `// SHA256 を検証`（直後 `verify_sha256(...)`）
-- `build.rs:146` `// tar で展開`（直後 `Command::new("tar")`）
-- `build.rs:158` `// ライブラリファイルを OUT_DIR/lib/ にコピー`（直後 `fs::copy`）
-- `build.rs:167` `// bindings.rs を OUT_DIR/ にコピー`（直後 `fs::copy`）
-- `build.rs:258` `// 依存ライブラリのリポジトリを取得する`（直後 `git_clone_external_lib`）
-- `build.rs:285` `// バインディングを生成する`（直後 `bindgen::Builder`）
+- `build.rs:170` `// curl でアーカイブをダウンロード`（直後 `Command::new("curl")`）
+- `build.rs:182` `// curl で SHA256 チェックサムをダウンロード`（直後 curl）
+- `build.rs:193` `// SHA256 を検証`（直後 `verify_sha256(...)`）
+- `build.rs:196` `// tar で展開`（直後 `Command::new("tar")`）
+- `build.rs:208` `// ライブラリファイルを OUT_DIR/lib/ にコピー`（直後 `fs::copy`）
+- `build.rs:217` `// bindings.rs を OUT_DIR/ にコピー`（直後 `fs::copy`）
+- `build.rs:308` `// 依存ライブラリのリポジトリを取得する`（直後 `git_clone_external_lib`）
+- `build.rs:335` `// バインディングを生成する`（直後 `bindgen::Builder`）
 
-`build.rs:20`（`// 各種変数やビルドディレクトリのセットアップ`）、`build.rs:25`（`// 各種メタデータを書き込む`）、`build.rs:261`（`// 依存ライブラリをビルドする`）も自明寄りだが、削除可否は実装時に判断する。
+`build.rs:21`（`// 各種変数やビルドディレクトリのセットアップ`）、`build.rs:26`（`// 各種メタデータを書き込む`）、`build.rs:311`（`// 依存ライブラリをビルドする`）も自明寄りだが、削除可否は実装時に判断する。
 
 ### 保持するコメント
 
 意図・根拠・理由を説明するコメントは残す。
 
-- `build.rs:40-42`（docs.rs で clone できないためスキップする理由）
-- `build.rs:90`（C++ 標準ライブラリをリンクする理由）
-- `build.rs:98`（source-build feature と prebuilt の分岐意図）
-- `build.rs:341-344`（shallow clone とアノテーティッドタグの注意）
-- `build.rs:227-230`, `build.rs:238`（certutil / shasum 出力形式の説明＝パース根拠）
+- `build.rs:41-42`（docs.rs で clone できないためスキップする理由）
+- `build.rs:140`（C++ 標準ライブラリをリンクする理由）
+- `build.rs:148`（source-build feature と prebuilt の分岐意図）
+- `build.rs:391-394`（shallow clone とアノテーティッドタグの注意）
+- `build.rs:277-280`, `build.rs:288`（certutil / shasum 出力形式の説明＝パース根拠）
 - 関数の説明コメント、および AGENTS.md:121 / :137 が要求するコメント
 
 ## 関連 issue との整合
 
 一部のコメント行は他 issue が削除する。重複・競合を避けるため対応順を擦り合わせる。
 
-- 0027（certutil デッドコード削除）が `build.rs:206`・`build.rs:227-230` を含むブロックを削除する
-- 0029（未使用 metadata 定数削除）が `build.rs:25` 付近の metadata 書き出しを削除する
-- 0003（docs.rs ダミー追従）が `build.rs:40-47` 付近を編集する
+- 0027（certutil デッドコード削除）が `build.rs:256`・`build.rs:277-280` を含むブロックを削除する
+- 0029（未使用 metadata 定数削除）が `build.rs:26` 付近の metadata 書き出しを削除する
+- 0003（docs.rs ダミー追従）が `build.rs:40-57` 付近を編集する
 
 ## CHANGES.md
 
@@ -58,6 +58,6 @@
 
 ## 完了条件
 
-- 上記の自明なコメント（`build.rs:120, 132, 143, 146, 158, 167, 258, 285`）が削除されていること
+- 上記の自明なコメント（`build.rs:170, 182, 193, 196, 208, 217, 308, 335`）が削除されていること
 - 意図・根拠・理由を説明するコメント、および AGENTS.md:121 / :137 が要求するコメントは残っていること
 - `cargo build` が通ること

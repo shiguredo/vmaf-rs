@@ -17,9 +17,9 @@ CI / Release で `shiguredo/github-actions` の複数アクションを `@main` 
 ## 現状（行番号は実ファイルと一致を確認済み）
 
 - `ci.yml:30, 63`: `shiguredo/github-actions/.github/actions/rust-cache@main`
-- `ci.yml:92`, `release.yml:139`: `shiguredo/github-actions/.github/actions/slack-notify@main`
-- slack-notify は `secrets.SLACK_WEBHOOK`（`ci.yml:95`, `release.yml:142`）と `GH_TOKEN`（`ci.yml:99`）を扱う
-- `actions/checkout`（`ci.yml:27,53,76`, `release.yml:19,63,123`）と `rust-lang/crates-io-auth-action`（`release.yml:124`）は既に `<SHA> # vX.Y.Z` 形式で SHA 固定済み
+- `ci.yml:95`, `release.yml:146`: `shiguredo/github-actions/.github/actions/slack-notify@main`
+- slack-notify は `secrets.SLACK_WEBHOOK`（`ci.yml:98`, `release.yml:149`）と `GH_TOKEN`（`ci.yml:102`）を扱う
+- `actions/checkout`（`ci.yml:27,53,76`, `release.yml:26,70,130`）と `rust-lang/crates-io-auth-action`（`release.yml:131`）は既に `<SHA> # vX.Y.Z` 形式で SHA 固定済み
 - `@main` 参照は上記 4 箇所のみ（`grep '@main' .github/` で確認）
 
 ## 設計方針
@@ -43,10 +43,10 @@ CI / Release の設定変更で公開 API・配布物に影響しないため、
 ## 関連 issue との整合
 
 - 0010（pending、build.rs の prebuilt ダウンロード経路のハードニング）と同じサプライチェーン強化の思想だが、本 issue の対象は CI のアクション参照で別物
-- release.yml で本 issue が触るのは slack_notify ジョブの 1 行（`release.yml:139`）のみ。0004（トップレベル permissions + github-release ジョブ）・0023（トップレベル concurrency + publish ジョブ）とは編集箇所が離れ、行レベルの直接衝突は無い。番号順（0004 → 0011 → 0013 → 0023）で進める
+- release.yml で本 issue が触るのは slack_notify ジョブの 1 行（`release.yml:146`）のみ。0004（トップレベル permissions + github-release ジョブ）・0023（トップレベル concurrency + publish ジョブ）とは編集箇所が離れ、行レベルの直接衝突は無い。番号順（0004 → 0011 → 0013 → 0023）で進める
 
 ## 完了条件
 
-- `ci.yml:30, 63, 92` と `release.yml:139` の `@main` がすべて 40 桁 commit SHA + バージョン/日付コメントに固定されていること
+- `ci.yml:30, 63, 95` と `release.yml:146` の `@main` がすべて 40 桁 commit SHA + バージョン/日付コメントに固定されていること
 - `grep -rn '@main' .github/` がヒット 0 件であること
 - すべての `uses:` 参照が SHA 固定（既存の checkout / crates-io-auth-action と同形式）であること

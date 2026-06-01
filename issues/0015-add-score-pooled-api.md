@@ -16,7 +16,7 @@ VMAF の主要ユースケースである「クリップ全体の 1 スコア（
 
 ## 現状
 
-`src/lib.rs:203-210` には `score_at_index` のみがあり、フレーム単位のスコアしか取れない。libvmaf には次の API がある（`/Users/voluntas/src/vmaf/libvmaf/include/libvmaf/libvmaf.h:274-276`、enum は 49-56 行）が Rust 側でラップされていない。
+`src/lib.rs:208-216` には `score_at_index` のみがあり、フレーム単位のスコアしか取れない。libvmaf には次の API がある（`/Users/voluntas/src/vmaf/libvmaf/include/libvmaf/libvmaf.h:274-276`、enum は 49-56 行）が Rust 側でラップされていない。
 
 ```c
 enum VmafPoolingMethod {
@@ -41,7 +41,7 @@ int vmaf_score_pooled(VmafContext *vmaf, VmafModel *model,
 
 ### メソッド
 
-`Context` に `score_at_index`（`src/lib.rs:203-210`）に倣ったメソッドを追加する。
+`Context` に `score_at_index`（`src/lib.rs:208-216`）に倣ったメソッドを追加する。
 
 ```rust
 pub fn score_pooled(
@@ -57,7 +57,7 @@ pub fn score_pooled(
 
 ### docs.rs ダミー bindings の更新（必須）
 
-`score_pooled` は `sys::vmaf_score_pooled` と `sys::VmafPoolingMethod_VMAF_POOL_METHOD_*` 定数を参照するため、`build.rs` の docs.rs 向けダミー定義（`build.rs:46-75`）にも次を追加しないと `DOCS_RS=1 cargo build` が壊れる（0003 が扱う乖離問題そのもの）。
+`score_pooled` は `sys::vmaf_score_pooled` と `sys::VmafPoolingMethod_VMAF_POOL_METHOD_*` 定数を参照するため、`build.rs` の docs.rs 向けダミー定義（`build.rs:45-127`）にも次を追加しないと `DOCS_RS=1 cargo build` が壊れる（0003 が扱う乖離問題そのもの）。
 
 ```rust
 pub type VmafPoolingMethod = u32;

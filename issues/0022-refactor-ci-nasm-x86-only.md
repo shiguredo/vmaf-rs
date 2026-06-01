@@ -18,11 +18,11 @@ NASM は x86_64 SIMD アセンブリ用で arm64 では不要だが、CI / Relea
 
 nasm のインストールは **5 箇所**にある。
 
-- `ci.yml:28`: fmt-clippy ジョブ（`runs-on: ubuntu-24.04` = x86_64）の apt-get
+- `ci.yml:29`: fmt-clippy ジョブ（`runs-on: ubuntu-24.04` = x86_64）の apt-get
 - `ci.yml:57`: test ジョブ Ubuntu の apt-get（`build-essential meson ninja-build nasm xxd` を 1 行で）
 - `ci.yml:61`: test ジョブ macOS の `brew install meson nasm`
-- `release.yml:69`: build-prebuilt Ubuntu の apt-get
-- `release.yml:74`: build-prebuilt macOS の `brew install meson nasm`
+- `release.yml:76`: build-prebuilt Ubuntu の apt-get
+- `release.yml:81`: build-prebuilt macOS の `brew install meson nasm`
 
 CI test matrix（`ci.yml:44-49`）は ubuntu-24.04 / ubuntu-24.04-arm / ubuntu-22.04 / ubuntu-22.04-arm / macos-26 / macos-15。GitHub のホスト型 macOS は現状すべて arm64。arm64 では nasm は不要。
 
@@ -35,7 +35,7 @@ nasm が必要なのは x86_64 Linux ランナー（ubuntu-24.04 / ubuntu-22.04�
 - **x86_64 Linux**: nasm を引き続きインストールする
 - **arm64 Linux（ubuntu-*-arm）**: nasm を入れない
 - **macOS（全 arm64）**: nasm を入れない（`brew install meson nasm` → `brew install meson`）
-- **fmt-clippy（`ci.yml:28`、ubuntu-24.04 = x86_64）**: nasm を残す（変更対象外。誤って消すと source-build の clippy が壊れる）
+- **fmt-clippy（`ci.yml:29`、ubuntu-24.04 = x86_64）**: nasm を残す（変更対象外。誤って消すと source-build の clippy が壊れる）
 
 実装:
 

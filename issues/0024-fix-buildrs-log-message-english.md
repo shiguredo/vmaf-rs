@@ -16,11 +16,11 @@
 
 ## 現状
 
-`build.rs:121` の `eprintln!("prebuilt ライブラリをダウンロード中: {}", archive_url)` が日本語で、AGENTS.md:10「ログメッセージは全て英語」に違反。コメント以外の日本語メッセージはこの 1 箇所のみで、他の `eprintln!`（`build.rs:193` `"SHA256 checksum verified: {}"`）や全 `panic!` / `expect` は既に英語（AGENTS.md:11 エラーメッセージ英語も満たしている）。コメントは日本語で規約どおり。
+`build.rs:171` の `eprintln!("prebuilt ライブラリをダウンロード中: {}", archive_url)` が日本語で、AGENTS.md:10「ログメッセージは全て英語」に違反。コメント以外の日本語メッセージはこの 1 箇所のみで、他の `eprintln!`（`build.rs:243` `"SHA256 checksum verified: {}"`）や全 `panic!` / `expect` は既に英語（AGENTS.md:11 エラーメッセージ英語も満たしている）。コメントは日本語で規約どおり。
 
 ## 設計方針
 
-`build.rs:121` のメッセージを英語にする。同じ `archive_url` を扱う `build.rs:129` の `panic!("failed to download prebuilt library: {}", ...)` と動詞を揃え、`eprintln!("downloading prebuilt library: {}", archive_url)` とする。
+`build.rs:171` のメッセージを英語にする。同じ `archive_url` を扱う `build.rs:179` の `panic!("failed to download prebuilt library: {}", ...)` と動詞を揃え、`eprintln!("downloading prebuilt library: {}", archive_url)` とする。
 
 ## CHANGES.md
 
@@ -28,5 +28,5 @@
 
 ## 完了条件
 
-- `build.rs:121` のログメッセージが英語になっていること
+- `build.rs:171` のログメッセージが英語になっていること
 - コメントを除くログ / エラー行（`eprintln!` / `println!` / `panic!` / `expect`）に日本語が残っていないこと（`grep -nP '[ぁ-んァ-ヶ一-龥]' build.rs | grep -E 'eprintln|println|panic|expect'` が 0 件）

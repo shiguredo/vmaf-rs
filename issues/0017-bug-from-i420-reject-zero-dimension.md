@@ -16,7 +16,7 @@
 
 ## 現状
 
-`src/lib.rs:267-278` で width = 0 の場合 `y_size = 0`、`uv_size = 0` となり、空スライスが長さ検証（`src/lib.rs:273`）を通過する。`vmaf_picture_alloc` は w = 0 を許容し、`copy_plane` は `width == 0 || height == 0` で early return する（`src/lib.rs:316`）。結果として `from_i420` は **ゼロ寸法でも `Ok` を返す**。
+`src/lib.rs:288-298` で width = 0 の場合 `y_size = 0`、`uv_size = 0` となり、空スライスが長さ検証（`src/lib.rs:293`）を通過する。`vmaf_picture_alloc` は w = 0 を許容し、`copy_plane` は `width == 0 || height == 0` で early return する（`src/lib.rs:336`）。結果として `from_i420` は **ゼロ寸法でも `Ok` を返す**。
 
 この 0 サイズ picture を `read_pictures` に渡しても、libvmaf の `validate_pic_params`（`/Users/voluntas/src/vmaf/libvmaf/src/libvmaf.c:609-638`）は初回フレームで `pic_params.w = ref->w[0]`（= 0）を代入してから比較するため、ゼロ寸法を即座には弾かない。失敗は後段の feature extractor 等で生じ、返るエラーが `-EINVAL` である保証はない。いずれにせよ無効な状態を後段に流すため、入力段での拒否が正しい。
 
