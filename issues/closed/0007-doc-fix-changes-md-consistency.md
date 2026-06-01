@@ -5,6 +5,7 @@
 - Polished: 2026-05-29
 - Model: Opus 4.8
 - Branch: feature/fix-changes-md-consistency
+- Completed: 2026-06-02
 
 ## 目的
 
@@ -64,3 +65,13 @@
 - 担当者インデント（各エントリ次行 2 文字下げ `- @voluntas`）が維持されていること
 - `## develop` が現コードと矛盾しないこと
 - 引用元の AGENTS.md 行番号が正しいこと（最終差分=111、中間状態=112）
+
+## 解決方法
+
+コード変更は行わず、前提が崩壊しているためクローズする（triage-issues での判定）。
+
+- 本 issue が削除・再分類対象とする `CHANGES.md` のエントリ（`[ADD] Picture::from_nv12`、`[FIX]` 4 件、統合テスト / ベンチの `[ADD]`・`[UPDATE]`、misc 再分類対象、パス誤り `tests/test_codec_vmaf.rs`、libyuv 文言など、本文が `CHANGES.md:14-43` と指す行）は、現在の `CHANGES.md`（全 15 行、`## develop` 直下は空の `### misc` のみ）に 1 件も存在しない。`from_nv12` は `src/` からも消滅済み。本 issue が前提とする CHANGES.md の状態は完全に失われている。
+- 残るかに見えた「初回リリースの基幹エントリ（libvmaf バインディング本体の `[ADD]`）を `## develop` に追記すべきか検討する」というタスクも、`AGENTS.md:198`「正式リリース前なので CHANGES.md への反映は不要です」により不要。
+- `CHANGES.md` ヘッダの種別凡例（`AGENTS.md:98-102` の 4 種別）にも規約違反・矛盾はない。
+
+以上より対応すべき残作業は無く、陳腐化としてクローズする。
