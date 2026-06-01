@@ -1,6 +1,6 @@
 # Error 型を入力検証エラーと FFI エラーで区別できるよう再設計する
 
-- Priority: Medium
+- Priority: High
 - Created: 2026-05-29
 - Polished: 2026-05-29
 - Model: Opus 4.8
@@ -14,7 +14,7 @@
 
 ## 優先度根拠
 
-利用者が `code` を errno として誤解する。プラットフォーム非保証の魔法数依存もある。設計上の弱さだが直ちに壊れはしない。Medium。
+利用者が `code` を errno として誤解する。プラットフォーム非保証の魔法数依存もある。加えて本 issue は「エラー表現を 0016 に委ねる」と複数 issue が参照する依存ハブで、0017（ゼロ寸法拒否）が `Error::InvalidInput` 導入を本 issue の先行に依存し、0015（score_pooled）もリベース対象とする。`from_i420` の魔法数 `-22`（EINVAL）が公開 API に残存しており、version 2026.0.0 未公開のうちにエラー型を確定すべき。被依存の 0017 と同格（Medium）だと着手順序が逆転するリスクがあるため High。
 
 ## 現状
 
