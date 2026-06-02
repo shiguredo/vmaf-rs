@@ -1,3 +1,8 @@
+[workspace]
+resolver = "2"
+# fuzz は cargo-fuzz (nightly 専用) のためメンバーに含めない
+members = [".", "pbt"]
+
 [package]
 name = "shiguredo_vmaf"
 version = "2026.0.0"
