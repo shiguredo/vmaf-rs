@@ -4,6 +4,7 @@
 - Created: 2026-05-29
 - Polished: 2026-05-29
 - Model: Opus 4.8
+- Completed: 2026-06-02
 - Branch: feature/add-pbt-and-fuzzing
 
 ## 目的
@@ -56,3 +57,36 @@ AGENTS.md:156 の `pbt/tests/prop_<module>.rs` と AGENTS.md のカバレッジ�
 - `fuzz/` が `cargo fuzz` の規約配置で存在し、`from_i420` の fuzz ターゲットが存在すること。stable の `cargo build` / `cargo test` が壊れないこと
 - PBT が CI で実行されること
 - `CHANGES.md` の `## develop`（`### misc` 該当）に `[ADD]` エントリを `- @voluntas` 付きで追記すること
+
+## 解決方法
+
+### workspace 化
+- `Cargo.toml` に `[workspace]` を追加し `members = [".", "pbt"]` を設定した
+- fuzz は cargo-fuzz (nightly 専用) のためメンバーに含めず、コメントで明記した
+
+### PBT クレート
+- `pbt/Cargo.toml` を新規作成し、`shiguredo_vmaf` (path) と `proptest = "1.6"` に依存
+- `source-build` フィーチャを転送（`shiguredo_vmaf/source-build`）
+- `pbt/tests/prop_lib.rs` に 3 つのプロパティテストを実装:
+  - `from_i420_は偶数非ゼロかつプレーン長整合で成功する` — Ok 経路
+  - `from_i420_は奇数寸法を拒否する` — 偶数チェックの Err 経路
+  - `from_i420_はプレーン長不一致でエラーを返す` — サイズ検証の Err 経路
+- ゼロ寸法拒否 (0017) の依存関係をコメントで明記
+
+### Fuzzing
+- `fuzz/Cargo.toml` と `fuzz/fuzz_targets/from_i420.rs` を作成
+- width/height 上限 4096、ゼロ許容の意図をコメントで明記
+- workspace 非メンバーのため stable build を壊さない
+
+### CI
+- `.github/workflows/ci.yml` の test ジョブに `cargo test -p pbt --features source-build` を追加
+- 全 OS マトリクス (Ubuntu 6 種 / macOS 2 種) で PBT が実行される
+
+### 変更ファイル
+- `Cargo.toml` (workspace 追加)
+- `Cargo.lock` (依存更新)
+- `pbt/Cargo.toml` (新規)
+- `pbt/tests/prop_lib.rs` (新規)
+- `fuzz/Cargo.toml` (新規)
+- `fuzz/fuzz_targets/from_i420.rs` (新規)
+- `.github/workflows/ci.yml` (PBT 行追加)
