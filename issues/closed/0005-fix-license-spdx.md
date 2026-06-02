@@ -4,6 +4,7 @@
 - Created: 2026-05-29
 - Polished: 2026-05-29
 - Model: Opus 4.8
+- Completed: 2026-06-02
 - Branch: feature/fix-license-spdx
 
 ## 目的
@@ -40,3 +41,9 @@ license = "Apache-2.0 AND BSD-2-Clause-Patent"
 - `license` フィールドが `Apache-2.0 AND BSD-2-Clause-Patent` になっていること (`cargo metadata` で確認)
 - `cargo publish --dry-run` がローカルの SPDX 検証を含めて成功すること
 - `CHANGES.md` の `## develop` に `[FIX]` エントリを `- @voluntas` 担当者行付きで追記すること
+
+## 解決方法
+
+コード変更なしでクローズする。
+
+issue の前提「`license` フィールドは生成バイナリのライセンス条件を表すべき」が誤り。`Cargo.toml` の `license` フィールドはクレート自身のソースコードのライセンスを表すものであり、本クレートの Rust ソースコードは Apache-2.0 である。libvmaf の prebuilt バイナリは利用者が別途入手するもので、クレートの `license` フィールドに含める必要はない。libvmaf のライセンス (BSD-2-Clause-Patent) は既に `README.md` と `LICENSE-THIRD-PARTY` で明示されている。
