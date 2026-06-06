@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "*"
+      - "[0-9][0-9][0-9][0-9].[0-9]+.[0-9]*"
 
 # deny-by-default の最小権限をトップレベルに置き、必要なジョブで明示的に昇格する
 permissions:
@@ -116,7 +116,7 @@ jobs:
         id: find_out_dir
         shell: bash
         run: |
-          OUT_DIR=$(find target/release/build/shiguredo_vmaf-*/out -maxdepth 0 -type d 2>/dev/null | head -1)
+          OUT_DIR=$(find target/release/build/shiguredo_vmaf-*/out -maxdepth 0 -type d 2>/dev/null | sort | head -1)
           echo "OUT_DIR=${OUT_DIR}" >> $GITHUB_OUTPUT
 
       - name: Create prebuilt archive
@@ -166,7 +166,7 @@ jobs:
 
   slack_notify:
     needs: [github-release, build-prebuilt, publish]
-    timeout-minutes: 20
+    timeout-minutes: 5
     runs-on: ubuntu-24.04
     if: ${{ always() }}
     permissions:
