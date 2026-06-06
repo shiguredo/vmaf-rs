@@ -92,7 +92,7 @@ jobs:
       - fmt-clippy
       - test
       - docs-rs
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     if: always()
     timeout-minutes: 5
     permissions:
