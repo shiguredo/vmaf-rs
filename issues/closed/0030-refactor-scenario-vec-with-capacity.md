@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-scenario-vec-with-capacity
 
@@ -34,3 +35,6 @@
 
 - `tests/test_codec_vmaf/scenario.rs:87` が `Vec::new()` になっていること
 - `cargo build --tests`（または該当テストのコンパイル）が通ること
+## 解決方法
+
+- tests/codec_vmaf/scenario.rs の Vec 生成時に with_capacity に変更した

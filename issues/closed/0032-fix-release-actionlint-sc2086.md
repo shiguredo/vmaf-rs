@@ -2,7 +2,8 @@
 
 - Priority: Low
 - Created: 2026-06-01
-- Polished: 2026-06-02
+- Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-release-actionlint-sc2086
 
@@ -56,3 +57,6 @@ SC2086 は info レベルの shell スタイル警告であり、workflow を in
 - actionlint が利用できる場合: `actionlint .github/workflows/release.yml` が SC2086 を報告しないこと (入手例: `brew install actionlint`、または `docker run --rm -v "$PWD":/repo --workdir /repo rhysd/actionlint:latest -color`)
 - actionlint が用意できない場合の代替確認: `grep -n '>> \$GITHUB_OUTPUT' .github/workflows/release.yml` がヒット 0 件 (= 全てクォート済み) であること
 - 変更が上記 2 箇所のクォート追加のみで、出力変数の値・workflow の挙動が変わらないこと (`git diff` で差分が 2 箇所のクォート追加に限られることを確認)
+## 解決方法
+
+- release.yml の gh release upload の変数参照をダブルクォートで囲み SC2086 を解消した
