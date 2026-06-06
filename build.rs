@@ -176,25 +176,55 @@ fn download_prebuilt(out_dir: &Path) -> PathBuf {
 
     // curl でアーカイブをダウンロード
     eprintln!("downloading prebuilt library: {}", archive_url);
-    let status = Command::new("curl")
-        .args(["-fsSL", "-o"])
+    let output = Command::new("curl")
+        .args([
+            "-fsSL",
+            "--connect-timeout",
+            "30",
+            "--max-time",
+            "300",
+            "--retry",
+            "3",
+            "--retry-delay",
+            "5",
+            "-o",
+        ])
         .arg(&archive_path)
         .arg(&archive_url)
-        .status()
+        .output()
         .expect("failed to execute curl. Ensure curl is installed");
-    if !status.success() {
-        panic!("failed to download prebuilt library: {}", archive_url);
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        panic!(
+            "failed to download prebuilt library: {}\n{}",
+            archive_url, stderr
+        );
     }
 
     // curl で SHA256 チェックサムをダウンロード
-    let status = Command::new("curl")
-        .args(["-fsSL", "-o"])
+    let output = Command::new("curl")
+        .args([
+            "-fsSL",
+            "--connect-timeout",
+            "30",
+            "--max-time",
+            "300",
+            "--retry",
+            "3",
+            "--retry-delay",
+            "5",
+            "-o",
+        ])
         .arg(&sha256_path)
         .arg(&sha256_url)
-        .status()
+        .output()
         .expect("failed to execute curl");
-    if !status.success() {
-        panic!("failed to download SHA256 checksum: {}", sha256_url);
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        panic!(
+            "failed to download SHA256 checksum: {}\n{}",
+            sha256_url, stderr
+        );
     }
 
     // SHA256 を検証
@@ -233,15 +263,35 @@ fn download_prebuilt(out_dir: &Path) -> PathBuf {
 
 // SHA256 チェックサムを検証する
 fn verify_sha256(file_path: &Path, sha256_path: &Path) {
-    let expected = fs::read_to_string(sha256_path)
-        .expect("failed to read SHA256 checksum file")
+    let content = fs::read_to_string(sha256_path).expect("failed to read SHA256 checksum file");
+    let expected = content
         .split_whitespace()
         .next()
         .expect("SHA256 checksum file is empty")
         .to_lowercase();
 
+    if expected.len() != 64 || !expected.chars().all(|c| c.is_ascii_hexdigit()) {
+        panic!(
+            "SHA256 checksum file contains invalid hex string: {}...",
+            &expected[..expected.len().min(32)]
+        );
+    }
+
     let actual = compute_sha256(file_path);
-    if actual != expected {
+    if actual.len() != expected.len() || actual.len() != 64 {
+        panic!(
+            "SHA256 checksum length mismatch: expected={}, actual={}",
+            expected.len(),
+            actual.len()
+        );
+    }
+
+    // 定数時間比較
+    let mut diff: u8 = 0;
+    for (a, e) in actual.bytes().zip(expected.bytes()) {
+        diff |= a ^ e;
+    }
+    if diff != 0 {
         panic!(
             "SHA256 checksum mismatch:\n  expected: {}\n  actual:   {}",
             expected, actual
