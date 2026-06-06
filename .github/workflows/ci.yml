@@ -27,7 +27,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - run: rustup update stable
       - run: sudo apt-get update && sudo apt-get install -y build-essential meson ninja-build nasm xxd cmake
-      - uses: shiguredo/github-actions/.github/actions/rust-cache@main
+      - uses: shiguredo/github-actions/.github/actions/rust-cache@145407fb88527b7068762db72480c1f55715e0b1 # main 2026-06-06
         with:
           os: ubuntu-24.04
           toolchain: stable
@@ -60,7 +60,7 @@ jobs:
         run: |
           brew install meson nasm
           command -v xxd
-      - uses: shiguredo/github-actions/.github/actions/rust-cache@main
+      - uses: shiguredo/github-actions/.github/actions/rust-cache@145407fb88527b7068762db72480c1f55715e0b1 # main 2026-06-06
         with:
           os: ${{ matrix.os }}
           toolchain: stable
@@ -93,7 +93,7 @@ jobs:
       actions: read
     steps:
       - name: Slack Notification
-        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # main 2026-06-06
         with:
           status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
