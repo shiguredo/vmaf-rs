@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-pin-action-refs
 
@@ -50,3 +51,9 @@ CI / Release の設定変更で公開 API・配布物に影響しないため、
 - `ci.yml:30, 63, 95` と `release.yml:146` の `@main` がすべて 40 桁 commit SHA + バージョン/日付コメントに固定されていること
 - `grep -rn '@main' .github/` がヒット 0 件であること
 - すべての `uses:` 参照が SHA 固定（既存の checkout / crates-io-auth-action と同形式）であること
+
+## 解決方法
+
+- `ci.yml:30,63,95` と `release.yml:146` の `@main` を commit SHA `145407fb88527b7068762db72480c1f55715e0b1` に固定し、`# main 2026-06-06` コメントを追記した
+- `grep -rn '@main' .github/` がヒット 0 件であることを確認した
+- 変更ファイル: `.github/workflows/ci.yml`、`.github/workflows/release.yml`（2 ファイル 4 行）
