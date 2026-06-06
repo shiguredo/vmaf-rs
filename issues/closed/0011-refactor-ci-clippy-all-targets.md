@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-ci-clippy-all-targets
 
@@ -74,3 +75,11 @@ prek の clippy フック（`prek.toml:32`）は pre-commit で実行される�
 - `prek.toml:32` の clippy は `--lib` のままであること（pre-commit 実行時間への配慮）
 - Makefile の `clippy-all` が CI のフラグ（`--all-targets`、workspace 化後は `--workspace --all-targets`）と整合していること
 - CI clippy が `tests/` の lint 違反を検出して fail すること
+
+## 解決方法
+
+- `ci.yml:35` の clippy を `--lib` から `--workspace --all-targets` に変更し、テストコード全体を lint 対象とした
+- `ci.yml:29` の `apt-get install` に `cmake` を追加し、dev-dependencies (aom/libvpx) のビルド要件に対応した
+- `prek.toml:32` は pre-commit の実行時間を考慮して `--lib` のまま維持した
+- Makefile の `clippy-all` は既に `--workspace --all-targets` であり、CI と整合している
+- 変更ファイル: `.github/workflows/ci.yml`（1 ファイル 2 行）
