@@ -57,10 +57,19 @@ impl BuiltinModel {
 }
 
 /// エラー
+///
+/// 入力検証エラーと libvmaf FFI 由来エラーを型で区別する。
 #[derive(Debug)]
-pub struct Error {
-    code: c_int,
-    function: &'static str,
+pub enum Error {
+    /// クレート側の入力検証エラー
+    InvalidInput(&'static str),
+    /// libvmaf FFI 由来エラー (負の errno code)
+    Ffi {
+        /// libvmaf が返した負の errno code
+        code: c_int,
+        /// エラーを返した C 関数名
+        function: &'static str,
+    },
 }
 
 impl Error {
@@ -68,14 +77,21 @@ impl Error {
         if code == 0 {
             Ok(())
         } else {
-            Err(Self { code, function })
+            Err(Self::Ffi { code, function })
         }
     }
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}() failed: code={}", self.function, self.code)
+        match self {
+            Error::InvalidInput(msg) => write!(f, "{msg}"),
+            Error::Ffi { code, function } => write!(
+                f,
+                "{function}() failed: {}",
+                std::io::Error::from_raw_os_error(-code)
+            ),
+        }
     }
 }
 
@@ -132,6 +148,33 @@ impl LogLevel {
             Self::Warning => sys::VmafLogLevel_VMAF_LOG_LEVEL_WARNING,
             Self::Info => sys::VmafLogLevel_VMAF_LOG_LEVEL_INFO,
             Self::Debug => sys::VmafLogLevel_VMAF_LOG_LEVEL_DEBUG,
+        }
+    }
+}
+
+/// VMAF プーリングメソッド
+///
+/// クリップ全体のスコアを集計する方法を指定する。
+/// libvmaf の `VmafPoolingMethod` に対応する。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PoolingMethod {
+    /// 全フレームの最小値
+    Min,
+    /// 全フレームの最大値
+    Max,
+    /// 全フレームの算術平均
+    Mean,
+    /// 全フレームの調和平均
+    HarmonicMean,
+}
+
+impl PoolingMethod {
+    fn to_sys(self) -> sys::VmafPoolingMethod {
+        match self {
+            Self::Min => sys::VmafPoolingMethod_VMAF_POOL_METHOD_MIN,
+            Self::Max => sys::VmafPoolingMethod_VMAF_POOL_METHOD_MAX,
+            Self::Mean => sys::VmafPoolingMethod_VMAF_POOL_METHOD_MEAN,
+            Self::HarmonicMean => sys::VmafPoolingMethod_VMAF_POOL_METHOD_HARMONIC_MEAN,
         }
     }
 }
@@ -214,6 +257,35 @@ impl Context {
         )?;
         Ok(score)
     }
+
+    /// 指定範囲のフレームをプールした VMAF スコアを取得する
+    ///
+    /// `index_low` と `index_high` はプール対象フレーム範囲（両端 inclusive）。
+    /// クリップ全体のスコアを取得するには、読み込んだ最終フレームの index を
+    /// `index_high` に渡すこと。
+    pub fn score_pooled(
+        &self,
+        model: &Model,
+        method: PoolingMethod,
+        index_low: u32,
+        index_high: u32,
+    ) -> Result<f64, Error> {
+        let mut score = 0.0;
+        Error::check(
+            unsafe {
+                sys::vmaf_score_pooled(
+                    self.inner,
+                    model.inner,
+                    method.to_sys(),
+                    &mut score,
+                    index_low,
+                    index_high,
+                )
+            },
+            "vmaf_score_pooled",
+        )?;
+        Ok(score)
+    }
 }
 
 impl Drop for Context {
@@ -279,10 +351,9 @@ impl Picture {
         // 偶数寸法のみを受理する。偶数なら div_ceil(n, 2) と n/2 (floor) が一致し、
         // 検証・コピー (copy_plane) ・libvmaf の確保寸法がすべて同一になる。
         if !width.is_multiple_of(2) || !height.is_multiple_of(2) {
-            return Err(Error {
-                code: -22, // EINVAL
-                function: "Picture::from_i420",
-            });
+            return Err(Error::InvalidInput(
+                "width and height must be even for I420 chroma subsampling",
+            ));
         }
 
         let y_size = (width as usize) * (height as usize);
@@ -291,10 +362,9 @@ impl Picture {
         let uv_size = uv_width * uv_height;
 
         if y.len() != y_size || u.len() != uv_size || v.len() != uv_size {
-            return Err(Error {
-                code: -22, // EINVAL
-                function: "Picture::from_i420",
-            });
+            return Err(Error::InvalidInput(
+                "plane size does not match width and height",
+            ));
         }
 
         let mut inner = MaybeUninit::<sys::VmafPicture>::zeroed();

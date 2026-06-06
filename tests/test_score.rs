@@ -1,4 +1,6 @@
-use shiguredo_vmaf::{BuiltinModel, Context, ContextConfig, Model, Picture, version};
+use shiguredo_vmaf::{
+    BuiltinModel, Context, ContextConfig, Model, Picture, PoolingMethod, version,
+};
 
 /// ダミー I420 フレームを生成する
 ///
@@ -220,4 +222,46 @@ fn from_i420_は偶数寸法を受理する() {
 
     let result = Picture::from_i420(&y, &u, &v, width, height);
     assert!(result.is_ok(), "偶数寸法は from_i420 で受理されるはず");
+}
+
+#[test]
+fn 複数フレームを_mean_でプールできる() {
+    let width = 192;
+    let height = 108;
+    let frame_count: u32 = 3;
+
+    let mut ctx = Context::new(ContextConfig::new()).expect("Context の生成に失敗");
+    let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
+    ctx.use_model(&model).expect("use_model に失敗");
+
+    for i in 0..frame_count {
+        let (y, u, v) = generate_dummy_i420(width, height, i as usize);
+        let (dy, du, dv) = generate_degraded_i420(width, height, i as usize);
+        let ref_pic = Picture::from_i420(&y, &u, &v, width as u32, height as u32)
+            .expect("ref Picture の生成に失敗");
+        let dist_pic = Picture::from_i420(&dy, &du, &dv, width as u32, height as u32)
+            .expect("dist Picture の生成に失敗");
+        ctx.read_pictures(Some(ref_pic), Some(dist_pic), i)
+            .expect("read_pictures に失敗");
+    }
+    ctx.read_pictures(None, None, 0).expect("flush に失敗");
+
+    let mut scores = Vec::new();
+    for i in 0..frame_count {
+        let score = ctx
+            .score_at_index(&model, i)
+            .expect("score_at_index に失敗");
+        scores.push(score);
+    }
+
+    let mean_expected = scores.iter().sum::<f64>() / scores.len() as f64;
+    let pooled = ctx
+        .score_pooled(&model, PoolingMethod::Mean, 0, frame_count - 1)
+        .expect("score_pooled に失敗");
+
+    let diff = (pooled - mean_expected).abs();
+    assert!(
+        diff < 0.1,
+        "pooled Mean は score_at_index の平均と一致するはず: pooled={pooled}, expected={mean_expected}"
+    );
 }
