@@ -78,7 +78,7 @@ fn 低品質_動画の符号化サイズは静止画より大きい() {
 /// make codec-bench
 /// # または
 /// VMAF_BENCH_BITRATES=7,18,34,100 cargo test --features source-build \
-///   --test test_codec_vmaf local_vmaf_ベンチレポート -- --nocapture
+///   --test codec_vmaf local_vmaf_ベンチレポート -- --nocapture
 /// ```
 #[test]
 fn local_vmaf_ベンチレポート() {
@@ -88,7 +88,7 @@ fn local_vmaf_ベンチレポート() {
 /// ローカル Y4M 試行。`local_videos/` に実クリップを置いて実行する。
 ///
 /// ```bash
-/// cargo test --features source-build --test test_codec_vmaf local_vmaf_y4m_ベンチレポート -- --nocapture
+/// cargo test --features source-build --test codec_vmaf local_vmaf_y4m_ベンチレポート -- --nocapture
 /// VMAF_BENCH_FRAMES=10 VMAF_BENCH_BITRATES=675,1800,3375 cargo test ...
 /// ```
 #[test]
