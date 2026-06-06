@@ -5,6 +5,7 @@
 - Model: DeepSeek V4 Pro
 - Branch: feature/add-builtinmodel-version-str-public
 - Polished: 2026-06-06
+- Completed: 2026-06-07
 
 ## 目的
 
