@@ -50,7 +50,8 @@ pub enum BuiltinModel {
 }
 
 impl BuiltinModel {
-    fn version_str(self) -> &'static str {
+    /// モデルに対応する libvmaf バージョン文字列を返す
+    pub fn version_str(self) -> &'static str {
         match self {
             Self::V061 => "vmaf_v0.6.1",
             Self::BV063 => "vmaf_b_v0.6.3",
