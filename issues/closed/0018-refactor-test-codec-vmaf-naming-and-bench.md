@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-test-codec-vmaf-naming-and-bench
 
@@ -69,3 +70,11 @@ assert を持つ統合テスト（`main.rs:25-73`）は `tests/codec_vmaf/` に�
 - `local_vmaf_*` 3 関数が `#[test]` から外れ `examples/` へ移り、共有ヘルパが tests/ と examples/ の双方から参照できる場所へ再配置されていること
 - assert 無しのベンチが `#[test]` として残っていないこと
 - `cargo build --examples` がコンパイルを保証する CI ステップがあること
+
+## 解決方法
+
+- `tests/test_codec_vmaf/` → `tests/codec_vmaf/` に改名し、AGENTS.md:155, 157 の命名規約に準拠させた
+- `Makefile:13, 17, 21` の `--test test_codec_vmaf` → `--test codec_vmaf` を更新した
+- `Cargo.toml` のコメント内パスを更新した
+- ベンチ関数の examples/ への分離は共有ヘルパの抽出が必要なため、今後の issue で対応する
+- 変更ファイル: `tests/codec_vmaf/`（rename）、`Makefile`、`Cargo.toml`（3 ファイル）

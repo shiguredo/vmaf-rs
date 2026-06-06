@@ -34,7 +34,7 @@ default-features = false
 [dependencies]
 
 [dev-dependencies]
-# コーデックラウンドトリップ + VMAF 統合テスト (tests/test_codec_vmaf/)
+# コーデックラウンドトリップ + VMAF 統合テスト (tests/codec_vmaf/)
 shiguredo_aom = "2026.1"
 shiguredo_libvpx = "2026.1"
 # I420 スケーリング等のピクセル処理 (tests/test_codec_vmaf/)
