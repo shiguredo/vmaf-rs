@@ -43,6 +43,8 @@ pub enum BuiltinModel {
     V061Neg,
     /// 4K 向けモデル (vmaf_4k_v0.6.1)
     V4k061,
+    /// 4K 向け NEG モードモデル (vmaf_4k_v0.6.1neg)
+    V4k061Neg,
 }
 
 impl BuiltinModel {
@@ -52,6 +54,7 @@ impl BuiltinModel {
             Self::BV063 => "vmaf_b_v0.6.3",
             Self::V061Neg => "vmaf_v0.6.1neg",
             Self::V4k061 => "vmaf_4k_v0.6.1",
+            Self::V4k061Neg => "vmaf_4k_v0.6.1neg",
         }
     }
 }
