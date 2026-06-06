@@ -11,7 +11,7 @@ pub fn vmaf_scores_i420(
 ) -> Vec<f64> {
     assert_eq!(reference.len(), distorted.len());
 
-    let mut ctx = Context::new(ContextConfig::new()).expect("Context の生成に失敗");
+    let mut ctx = Context::new(ContextConfig::default()).expect("Context の生成に失敗");
     let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
     ctx.use_model(&model).expect("use_model に失敗");
 

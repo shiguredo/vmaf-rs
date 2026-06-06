@@ -53,7 +53,7 @@ fn 同一フレームの_vmaf_スコアは高得点() {
     let height = 108;
     let (y, u, v) = generate_dummy_i420(width, height, 0);
 
-    let mut ctx = Context::new(ContextConfig::new()).expect("Context の生成に失敗");
+    let mut ctx = Context::new(ContextConfig::default()).expect("Context の生成に失敗");
     let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
     ctx.use_model(&model).expect("use_model に失敗");
 
@@ -83,7 +83,7 @@ fn 劣化フレームの_vmaf_スコアは低得点() {
     let (ref_y, ref_u, ref_v) = generate_dummy_i420(width, height, 0);
     let (dist_y, dist_u, dist_v) = generate_degraded_i420(width, height, 0);
 
-    let mut ctx = Context::new(ContextConfig::new()).expect("Context の生成に失敗");
+    let mut ctx = Context::new(ContextConfig::default()).expect("Context の生成に失敗");
     let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
     ctx.use_model(&model).expect("use_model に失敗");
 
@@ -111,7 +111,7 @@ fn read_pictures_は寸法不一致でエラーを返す() {
     // ref と dist の寸法不一致を検出し read_pictures がエラーを返す。
     // このエラー経路で渡した Picture が drop 時に unref され、リークしないことが本修正の狙い。
     // テストはエラーが返ること自体を確認する (リーク量はメモリ計測が必要なため検証対象外)。
-    let mut ctx = Context::new(ContextConfig::new()).expect("Context の生成に失敗");
+    let mut ctx = Context::new(ContextConfig::default()).expect("Context の生成に失敗");
     let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
     ctx.use_model(&model).expect("use_model に失敗");
 
@@ -137,7 +137,7 @@ fn read_pictures_はスレッド設定でも寸法不一致でエラーを返す
     // パニックせず Err を返すことを確認する。
     let config = ContextConfig {
         n_threads: 2,
-        ..ContextConfig::new()
+        ..ContextConfig::default()
     };
     let mut ctx = Context::new(config).expect("Context の生成に失敗");
     let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
@@ -260,7 +260,7 @@ fn 複数フレームを_mean_でプールできる() {
     let height = 108;
     let frame_count: u32 = 3;
 
-    let mut ctx = Context::new(ContextConfig::new()).expect("Context の生成に失敗");
+    let mut ctx = Context::new(ContextConfig::default()).expect("Context の生成に失敗");
     let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
     ctx.use_model(&model).expect("use_model に失敗");
 

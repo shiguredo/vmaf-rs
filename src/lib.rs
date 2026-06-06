@@ -111,20 +111,13 @@ pub struct ContextConfig {
     pub n_subsample: u32,
 }
 
-impl ContextConfig {
-    /// デフォルト設定で `ContextConfig` を生成する
-    pub fn new() -> Self {
+impl Default for ContextConfig {
+    fn default() -> Self {
         Self {
             log_level: LogLevel::Error,
             n_threads: 0,
             n_subsample: 1,
         }
-    }
-}
-
-impl Default for ContextConfig {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
