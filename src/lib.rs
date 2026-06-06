@@ -113,6 +113,10 @@ pub struct ContextConfig {
     pub n_threads: u32,
     /// N フレームごとにスコアを計算する (デフォルト: 1 = 全フレーム)
     pub n_subsample: u32,
+    /// CPU affinity マスク (デフォルト: 0 = libvmaf が自動決定)
+    pub cpumask: u64,
+    /// GPU affinity マスク (デフォルト: 0 = libvmaf が自動決定)
+    pub gpumask: u64,
 }
 
 impl Default for ContextConfig {
@@ -121,6 +125,8 @@ impl Default for ContextConfig {
             log_level: LogLevel::Error,
             n_threads: 0,
             n_subsample: 1,
+            cpumask: 0,
+            gpumask: 0,
         }
     }
 }
@@ -197,8 +203,8 @@ impl Context {
             log_level: config.log_level.to_sys(),
             n_threads: config.n_threads,
             n_subsample: config.n_subsample,
-            cpumask: 0,
-            gpumask: 0,
+            cpumask: config.cpumask,
+            gpumask: config.gpumask,
         };
 
         let mut inner = ptr::null_mut();
