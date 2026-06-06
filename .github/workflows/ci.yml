@@ -67,7 +67,7 @@ jobs:
         with:
           os: ${{ matrix.os }}
           toolchain: stable
-      - run: cargo test --features source-build --test test_score
+      - run: cargo test --features source-build --test test_lib
       - run: cargo test -p pbt --features source-build
 
   docs-rs:

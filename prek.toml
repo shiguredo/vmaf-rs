@@ -38,7 +38,7 @@ hooks = [
   {
     id = "cargo-test",
     name = "cargo test",
-    entry = "cargo test --features source-build --test test_score",
+    entry = "cargo test --features source-build --test test_lib",
     language = "system",
     types = ["rust"],
     pass_filenames = false,

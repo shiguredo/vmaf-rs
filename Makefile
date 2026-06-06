@@ -6,7 +6,7 @@ test:
 
 # CI 相当の軽いテスト (バインディングのみ)
 test-quick:
-	cargo test --features source-build --test test_score
+	cargo test --features source-build --test test_lib
 
 # ローカル試行: コンテンツ × コーデック × ビットレートの表を出力 (assert なし)
 codec-bench:
