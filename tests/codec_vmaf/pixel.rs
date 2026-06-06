@@ -1,6 +1,6 @@
 use shiguredo_libyuv::{FilterMode, I420Image, I420ImageMut, ImageSize};
 
-use crate::types::{DecodedI420, I420Frame};
+use crate::types::I420Frame;
 
 /// ストライド付き I420 プレーンを密なバッファに詰める
 pub fn pack_plane(data: &[u8], width: usize, height: usize, stride: usize) -> Vec<u8> {
@@ -10,14 +10,6 @@ pub fn pack_plane(data: &[u8], width: usize, height: usize, stride: usize) -> Ve
             .copy_from_slice(&data[row * stride..row * stride + width]);
     }
     out
-}
-
-pub fn decoded_to_i420_frame(decoded: &DecodedI420) -> I420Frame {
-    I420Frame {
-        y: decoded.y.clone(),
-        u: decoded.u.clone(),
-        v: decoded.v.clone(),
-    }
 }
 
 /// I420 フレーム列を libyuv で指定解像度へスケールする

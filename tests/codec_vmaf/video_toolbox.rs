@@ -70,7 +70,7 @@ fn realtime_encoder_config(
 fn vt_i420_to_decoded(frame: &VtI420Frame<'_>) -> DecodedI420 {
     let width = frame.width();
     let height = frame.height();
-    DecodedI420 {
+    I420Frame {
         y: pack_plane(frame.y_plane(), width, height, frame.y_stride()),
         u: pack_plane(
             frame.u_plane(),

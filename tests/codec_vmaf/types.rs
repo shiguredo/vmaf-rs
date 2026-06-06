@@ -83,11 +83,7 @@ pub struct I420Frame {
 }
 
 /// デコード後 I420 1 フレーム分
-pub struct DecodedI420 {
-    pub y: Vec<u8>,
-    pub u: Vec<u8>,
-    pub v: Vec<u8>,
-}
+pub type DecodedI420 = I420Frame;
 
 /// ラウンドトリップ計測結果
 #[derive(Clone)]

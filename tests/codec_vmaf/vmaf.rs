@@ -1,6 +1,5 @@
 use shiguredo_vmaf::{BuiltinModel, Context, ContextConfig, Model, Picture};
 
-use crate::pixel::decoded_to_i420_frame;
 use crate::types::{DecodedI420, I420Frame, RoundtripMetrics};
 
 pub fn vmaf_scores_i420(
@@ -53,7 +52,7 @@ pub fn measure_roundtrip(
     encoded_size: usize,
     decoded: &[DecodedI420],
 ) -> RoundtripMetrics {
-    let distorted: Vec<I420Frame> = decoded.iter().map(decoded_to_i420_frame).collect();
+    let distorted: Vec<I420Frame> = decoded.to_vec();
     let scores = vmaf_scores_i420(reference, &distorted, width, height);
     let avg_vmaf = scores.iter().sum::<f64>() / scores.len() as f64;
     let min_vmaf = scores.iter().copied().fold(f64::INFINITY, f64::min);
