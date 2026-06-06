@@ -295,7 +295,10 @@ impl Context {
 impl Drop for Context {
     fn drop(&mut self) {
         if !self.inner.is_null() {
-            let _ = unsafe { sys::vmaf_close(self.inner) };
+            let ret = unsafe { sys::vmaf_close(self.inner) };
+            if ret != 0 {
+                tracing::warn!("vmaf_close() failed with error code: {ret}");
+            }
         }
     }
 }
@@ -407,7 +410,10 @@ impl Picture {
 impl Drop for Picture {
     fn drop(&mut self) {
         if self.owned {
-            let _ = unsafe { sys::vmaf_picture_unref(&mut self.inner) };
+            let ret = unsafe { sys::vmaf_picture_unref(&mut self.inner) };
+            if ret != 0 {
+                tracing::warn!("vmaf_picture_unref() failed with error code: {ret}");
+            }
         }
     }
 }
