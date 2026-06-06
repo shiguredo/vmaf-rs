@@ -167,7 +167,7 @@ jobs:
   slack_notify:
     needs: [github-release, build-prebuilt, publish]
     timeout-minutes: 20
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     if: ${{ always() }}
     permissions:
       actions: read
