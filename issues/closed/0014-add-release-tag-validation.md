@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/add-release-tag-validation
 
@@ -81,3 +82,11 @@ Release 設定への追加で公開 API・配布物に影響しないため、CH
 - タグ形式の正規表現（通常 / canary）に合致しないタグ、または `Cargo.toml` version と不一致のタグで `github-release` ジョブが fail する検証ステップが存在すること（静的に確認）
 - publish ジョブに canary をスキップする `if:` 条件が記述されていること（静的に確認）
 - canary タグの各ジョブ挙動が上表どおりに制御されていること
+
+## 解決方法
+
+- `release.yml` の `github-release` ジョブに、タグ形式の正規表現検証と `Cargo.toml` version との一致検証ステップを追加した
+  - 通常タグ: `^[0-9]{4}\.[0-9]+\.[0-9]+$` / canary タグ: `^[0-9]{4}\.[0-9]+\.[0-9]+-canary\.[0-9]+$`
+- `build-prebuilt` ジョブに canary スキップ条件 `if: !contains(..., 'canary')` を追加した
+- `publish` ジョブに canary スキップ条件 `if: !contains(..., 'canary')` を追加した
+- 変更ファイル: `.github/workflows/release.yml`（1 ファイル 3 箇所）
