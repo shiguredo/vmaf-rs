@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-remove-windows-certutil-dead-code
 
@@ -46,3 +47,6 @@
 - `compute_sha256` の計算側・解析側がともに macOS / else の 2 分岐に簡素化され、Windows (certutil) 分岐が削除されていること
 - macOS / Linux で prebuilt 経路の `verify_sha256` → `compute_sha256` が動作すること（`cargo build`）
 - `cargo clippy` が警告なく通ること
+## 解決方法
+
+- build.rs の Windows certutil 分岐を削除した

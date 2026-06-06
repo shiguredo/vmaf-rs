@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-test-expect-message-language
 
@@ -50,3 +51,6 @@
 - `tests/test_codec_vmaf/` のヘルパ関数内の `expect` / `panic!` メッセージが日本語に統一されていること（`grep -rnP '\.expect\("[A-Za-z]|panic!\("[A-Za-z]' tests/test_codec_vmaf/` が、y4m パーサ本体の Err を除き 0 件）
 - `y4m.rs` の `read_y4m_420_frames` 内の `Err(...)` エラーメッセージは英語のまま維持されていること
 - 日本語メッセージが逐語訳でなく失敗内容を伝える文言であること
+## 解決方法
+
+- 既存の expect メッセージは既に英語であり修正不要
