@@ -348,8 +348,12 @@ impl Picture {
     /// クロマプレーンの端数が切り捨てられ、入力データの取りこぼし（誤ったスコア）を招くため、
     /// 明示的に拒否する。
     pub fn from_i420(y: &[u8], u: &[u8], v: &[u8], width: u32, height: u32) -> Result<Self, Error> {
-        // 偶数寸法のみを受理する。偶数なら div_ceil(n, 2) と n/2 (floor) が一致し、
-        // 検証・コピー (copy_plane) ・libvmaf の確保寸法がすべて同一になる。
+        // ゼロ寸法は無効な picture を後段に流し込む前に拒否する。
+        // 奇数寸法を拒否するのは、偶数なら div_ceil(n, 2) と n/2 (floor) が一致し、
+        // 検証・コピー (copy_plane) ・libvmaf の確保寸法がすべて同一になるため。
+        if width == 0 || height == 0 {
+            return Err(Error::InvalidInput("width and height must be non-zero"));
+        }
         if !width.is_multiple_of(2) || !height.is_multiple_of(2) {
             return Err(Error::InvalidInput(
                 "width and height must be even for I420 chroma subsampling",
