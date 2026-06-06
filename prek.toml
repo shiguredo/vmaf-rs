@@ -44,4 +44,13 @@ hooks = [
     pass_filenames = false,
     priority = 20,
   },
+  {
+    id = "cargo-pbt",
+    name = "cargo test (pbt)",
+    entry = "cargo test -p pbt --features source-build",
+    language = "system",
+    types = ["rust"],
+    pass_filenames = false,
+    priority = 21,
+  },
 ]
