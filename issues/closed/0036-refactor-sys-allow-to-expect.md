@@ -5,6 +5,7 @@
 - Model: DeepSeek V4 Pro
 - Branch: feature/refactor-sys-allow-to-expect
 - Polished: 2026-06-06
+- Completed: 2026-06-07
 
 ## 目的
 
