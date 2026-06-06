@@ -187,6 +187,7 @@ impl PoolingMethod {
 /// 利用者は単一スレッドから逐次利用すること。
 pub struct Context {
     inner: *mut sys::VmafContext,
+    flushed: bool,
 }
 
 impl Context {
@@ -203,7 +204,10 @@ impl Context {
         let mut inner = ptr::null_mut();
         Error::check(unsafe { sys::vmaf_init(&mut inner, cfg) }, "vmaf_init")?;
 
-        Ok(Self { inner })
+        Ok(Self {
+            inner,
+            flushed: false,
+        })
     }
 
     /// モデルに必要な feature extractor を登録する
@@ -227,6 +231,12 @@ impl Context {
         mut distorted: Option<Picture>,
         index: u32,
     ) -> Result<(), Error> {
+        if self.flushed {
+            return Err(Error::InvalidInput("read_pictures called after flush"));
+        }
+
+        let is_flush = reference.is_none() && distorted.is_none();
+
         // 所有権移譲は FFI 成功後に行う (ここで owned を false にするとエラー時にリークする)
         let ref_ptr = reference
             .as_mut()
@@ -241,6 +251,10 @@ impl Context {
             unsafe { sys::vmaf_read_pictures(self.inner, ref_ptr, dist_ptr, index) },
             "vmaf_read_pictures",
         )?;
+
+        if is_flush {
+            self.flushed = true;
+        }
 
         // 成功時は libvmaf が呼び出し元の Picture を unref 済み (構造体は memset 済み) のため、
         // drop 時の無意味な再 unref を避けるべく所有権を放棄する。
