@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-makefile-clippy-double-dash
 
@@ -48,3 +49,10 @@ cargo clippy --workspace --all-targets --features source-build -- -- -D warnings
 - `make clippy` と `make clippy-all` が現在の develop HEAD で成功すること（exit 0）
 - `src/lib.rs` に `let unused = 1;` 等の意図的な warning を入れた状態で `make clippy` が失敗すること（`-D warnings` が効くこと）
 - ダッシュ記法が `ci.yml:35` / `prek.toml:32` と一致すること
+
+## 解決方法
+
+- `Makefile:33` と `Makefile:37` の `-- -- -D warnings` を `-- -D warnings` に修正した
+- `Makefile:1` の `.PHONY` に `clippy-all` と `cover` を追加した
+- `make clippy` と `make clippy-all` が正常終了すること、および意図的な warning で失敗することを確認した
+- 変更ファイル: `Makefile`（1 ファイル 3 行）

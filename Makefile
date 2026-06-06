@@ -1,4 +1,4 @@
-.PHONY: test test-quick codec-bench codec-match codec-bench-all check clippy fmt clean
+.PHONY: test test-quick codec-bench codec-match codec-bench-all cover check clippy clippy-all fmt clean
 
 # 全テスト (重い統合テスト含む)
 test:
@@ -30,11 +30,11 @@ check:
 
 # cargo clippy を実行する (CI 相当: ライブラリのみ)
 clippy:
-	cargo clippy --lib --features source-build -- -- -D warnings
+	cargo clippy --lib --features source-build -- -D warnings
 
 # ベンチマークテスト含む clippy
 clippy-all:
-	cargo clippy --workspace --all-targets --features source-build -- -- -D warnings
+	cargo clippy --workspace --all-targets --features source-build -- -D warnings
 
 # cargo fmt を実行する
 fmt:
