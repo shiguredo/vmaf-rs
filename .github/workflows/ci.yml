@@ -54,11 +54,14 @@ jobs:
       - run: rustup update stable
       - name: Install build dependencies (Ubuntu)
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo apt-get update && sudo apt-get install -y build-essential meson ninja-build nasm xxd
+        run: sudo apt-get update && sudo apt-get install -y build-essential meson ninja-build xxd
+      - name: Install NASM (x86_64 only)
+        if: startsWith(matrix.os, 'ubuntu') && !endsWith(matrix.os, '-arm')
+        run: sudo apt-get install -y nasm
       - name: Install build dependencies (macOS)
         if: startsWith(matrix.os, 'macos')
         run: |
-          brew install meson nasm
+          brew install meson
           command -v xxd
       - uses: shiguredo/github-actions/.github/actions/rust-cache@145407fb88527b7068762db72480c1f55715e0b1 # main 2026-06-06
         with:
