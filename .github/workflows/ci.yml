@@ -69,6 +69,9 @@ jobs:
           toolchain: stable
       - run: cargo test --features source-build --test test_lib
       - run: cargo test -p pbt --features source-build
+      - name: Run codec integration test (x86_64 only, requires NASM)
+        if: ${{ !endsWith(matrix.os, '-arm') }}
+        run: cargo test --features source-build --test codec_vmaf aom_静止画_高品質
 
   docs-rs:
     name: docs.rs
