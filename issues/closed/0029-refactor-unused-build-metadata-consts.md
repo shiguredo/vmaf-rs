@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-unused-build-metadata-consts
 
@@ -52,3 +53,6 @@
 
 - 削除した場合: `src/lib.rs:25-29`・`build.rs:22, 25-37`・`src/sys.rs:8` が削除され、`get_git_url_and_version()` は残り、`cargo build` と `DOCS_RS=1 cargo build --no-default-features` が通ること。`### misc` に削除エントリが追記されていること
 - 維持した場合: `BUILD_REPOSITORY` / `BUILD_VERSION` の doc に `version()` との差分（ビルド時 provenance）が明記されていること
+## 解決方法
+
+- BUILD_METADATA 定数と sys.rs の include を削除し build.rs の metadata 出力部を除去した
