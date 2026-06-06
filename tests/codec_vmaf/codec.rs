@@ -44,8 +44,10 @@ fn realtime_vp9_encoder_config(width: u32, height: u32, bitrate_kbps: u32) -> Vp
             ..Vp9Config::default()
         }),
     );
-    config.target_bitrate =
-        usize::try_from(bitrate_kbps).expect("bitrate が usize に収まらない") * 1000;
+    config.target_bitrate = usize::try_from(bitrate_kbps)
+        .ok()
+        .and_then(|v| v.checked_mul(1000))
+        .expect("ビットレート計算でオーバーフロー");
     config.min_quantizer = 2;
     config.max_quantizer = 52;
     config.cpu_used = Some(7);
@@ -62,8 +64,10 @@ fn realtime_vp8_encoder_config(width: u32, height: u32, bitrate_kbps: u32) -> Vp
         VpxImageFormat::I420,
         CodecConfig::Vp8(Vp8Config::default()),
     );
-    config.target_bitrate =
-        usize::try_from(bitrate_kbps).expect("bitrate が usize に収まらない") * 1000;
+    config.target_bitrate = usize::try_from(bitrate_kbps)
+        .ok()
+        .and_then(|v| v.checked_mul(1000))
+        .expect("ビットレート計算でオーバーフロー");
     config.min_quantizer = 2;
     config.max_quantizer = 52;
     // libvpx の VP8E_SET_CPUUSED は符号付き。リアルタイム符号化の既定は -6。
@@ -124,8 +128,18 @@ fn push_vpx_decoded_frames(decoded: &mut Vec<DecodedI420>, decoder: &mut VpxDeco
         let height = frame.height();
         decoded.push(I420Frame {
             y: pack_plane(frame.y_plane(), width, height, frame.y_stride()),
-            u: pack_plane(frame.u_plane(), width / 2, height / 2, frame.u_stride()),
-            v: pack_plane(frame.v_plane(), width / 2, height / 2, frame.v_stride()),
+            u: pack_plane(
+                frame.u_plane(),
+                width.div_ceil(2),
+                height.div_ceil(2),
+                frame.u_stride(),
+            ),
+            v: pack_plane(
+                frame.v_plane(),
+                width.div_ceil(2),
+                height.div_ceil(2),
+                frame.v_stride(),
+            ),
         });
     }
 }
