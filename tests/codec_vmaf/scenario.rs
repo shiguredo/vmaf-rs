@@ -107,7 +107,7 @@ pub fn assert_monotonic_bitrate_sweep(
     }
 
     let first = &metrics[0];
-    let last = metrics.last().expect("metrics not empty");
+    let last = metrics.last().expect("metrics が空ではない");
     assert!(
         last.encoded_size > first.encoded_size,
         "{codec}: 最高ビットレートの符号化サイズは最低より大きいはず: {} -> {}",
@@ -129,7 +129,7 @@ pub fn print_codec_comparison_row(
                 .iter()
                 .find(|(c, kbps, _)| *c == codec && *kbps == bitrate_kbps)
                 .map(|(_, _, metric)| metric)
-                .expect("metrics missing");
+                .expect("metrics が見つからない");
             parts.push(format!("{}={:.2}", codec.label(), metric.avg_vmaf));
         }
         eprintln!("{bitrate_kbps} kbps: {}", parts.join(" | "));

@@ -104,7 +104,7 @@ pub fn read_y4m_420_frames(
 pub fn require_y4m_path(path: PathBuf) -> PathBuf {
     if !path.is_file() {
         panic!(
-            "Y4M file not found: {} (set VMAF_Y4M_PATH or place rush_hour under local_videos/)",
+            "Y4M ファイルが見つからない: {} (VMAF_Y4M_PATH を設定するか local_videos/ に rush_hour を配置してください)",
             path.display()
         );
     }

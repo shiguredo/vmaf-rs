@@ -44,7 +44,8 @@ fn realtime_vp9_encoder_config(width: u32, height: u32, bitrate_kbps: u32) -> Vp
             ..Vp9Config::default()
         }),
     );
-    config.target_bitrate = usize::try_from(bitrate_kbps).expect("bitrate fits in usize") * 1000;
+    config.target_bitrate =
+        usize::try_from(bitrate_kbps).expect("bitrate が usize に収まらない") * 1000;
     config.min_quantizer = 2;
     config.max_quantizer = 52;
     config.cpu_used = Some(7);
@@ -61,7 +62,8 @@ fn realtime_vp8_encoder_config(width: u32, height: u32, bitrate_kbps: u32) -> Vp
         VpxImageFormat::I420,
         CodecConfig::Vp8(Vp8Config::default()),
     );
-    config.target_bitrate = usize::try_from(bitrate_kbps).expect("bitrate fits in usize") * 1000;
+    config.target_bitrate =
+        usize::try_from(bitrate_kbps).expect("bitrate が usize に収まらない") * 1000;
     config.min_quantizer = 2;
     config.max_quantizer = 52;
     // libvpx の VP8E_SET_CPUUSED は符号付き。リアルタイム符号化の既定は -6。
@@ -73,21 +75,26 @@ fn realtime_vp8_encoder_config(width: u32, height: u32, bitrate_kbps: u32) -> Vp
 
 fn push_aom_decoded_frames(decoded: &mut Vec<DecodedI420>, decoder: &mut Decoder) {
     while let Some(frame) = decoder.next_frame() {
-        let y_stride = frame.y_stride().expect("Y stride");
-        let u_stride = frame.u_stride().expect("U stride");
-        let v_stride = frame.v_stride().expect("V stride");
+        let y_stride = frame.y_stride().expect("Y ストライドの取得に失敗");
+        let u_stride = frame.u_stride().expect("U ストライドの取得に失敗");
+        let v_stride = frame.v_stride().expect("V ストライドの取得に失敗");
         let width = frame.width();
         let height = frame.height();
         decoded.push(DecodedI420 {
-            y: pack_plane(frame.y_plane().expect("Y plane"), width, height, y_stride),
+            y: pack_plane(
+                frame.y_plane().expect("Y プレーンの取得に失敗"),
+                width,
+                height,
+                y_stride,
+            ),
             u: pack_plane(
-                frame.u_plane().expect("U plane"),
+                frame.u_plane().expect("U プレーンの取得に失敗"),
                 width.div_ceil(2),
                 height.div_ceil(2),
                 u_stride,
             ),
             v: pack_plane(
-                frame.v_plane().expect("V plane"),
+                frame.v_plane().expect("V プレーンの取得に失敗"),
                 width.div_ceil(2),
                 height.div_ceil(2),
                 v_stride,
@@ -112,7 +119,7 @@ fn decode_aom_packets(packets: &[Vec<u8>]) -> Vec<DecodedI420> {
 }
 
 fn push_vpx_decoded_frames(decoded: &mut Vec<DecodedI420>, decoder: &mut VpxDecoder) {
-    while let Some(frame) = decoder.next_frame().expect("next_frame") {
+    while let Some(frame) = decoder.next_frame().expect("next_frame に失敗") {
         let width = frame.width();
         let height = frame.height();
         decoded.push(DecodedI420 {
@@ -160,13 +167,13 @@ pub fn encode_decode_aom(
         };
         encoder.encode(&image, &options).expect("AOM encode に失敗");
         while let Some(encoded) = encoder.next_frame() {
-            packets.push(encoded.data().expect("encoded data").to_vec());
+            packets.push(encoded.data().expect("符号化データの取得に失敗").to_vec());
         }
     }
 
     encoder.finish().expect("AOM finish に失敗");
     while let Some(encoded) = encoder.next_frame() {
-        packets.push(encoded.data().expect("encoded data").to_vec());
+        packets.push(encoded.data().expect("符号化データの取得に失敗").to_vec());
     }
 
     let encoded_size: usize = packets.iter().map(|p| p.len()).sum();
