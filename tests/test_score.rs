@@ -225,6 +225,36 @@ fn from_i420_は偶数寸法を受理する() {
 }
 
 #[test]
+fn from_i420_はゼロ幅を拒否する() {
+    let y = vec![];
+    let u = vec![];
+    let v = vec![];
+    let result = Picture::from_i420(&y, &u, &v, 0, 2);
+    assert!(result.is_err(), "width=0 は from_i420 で拒否されるはず");
+}
+
+#[test]
+fn from_i420_はゼロ高を拒否する() {
+    let y = vec![];
+    let u = vec![];
+    let v = vec![];
+    let result = Picture::from_i420(&y, &u, &v, 2, 0);
+    assert!(result.is_err(), "height=0 は from_i420 で拒否されるはず");
+}
+
+#[test]
+fn from_i420_はゼロ寸法両方を拒否する() {
+    let y = vec![];
+    let u = vec![];
+    let v = vec![];
+    let result = Picture::from_i420(&y, &u, &v, 0, 0);
+    assert!(
+        result.is_err(),
+        "width=height=0 は from_i420 で拒否されるはず"
+    );
+}
+
+#[test]
 fn 複数フレームを_mean_でプールできる() {
     let width = 192;
     let height = 108;

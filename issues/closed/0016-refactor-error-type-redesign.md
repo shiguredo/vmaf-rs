@@ -3,6 +3,7 @@
 - Priority: High
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-error-type-redesign
 
@@ -83,3 +84,11 @@ libvmaf は **負の** errno（例: `-22` = `-EINVAL`）を返すのに対し `s
 - `from_i420` の検証エラーが `InvalidInput` になり、`-22` 魔法数が撤廃されていること
 - `Ffi` の Display が `from_raw_os_error(-code)` により errno 文字列（例: "Invalid argument"）を含むこと
 - `from_i420` の検証エラーが `InvalidInput` バリアントになることを確認する単体テストと、Display が errno 文字列を含むことを確認する単体テストがあること
+
+## 解決方法
+
+- `Error` を struct から enum `{ InvalidInput(&'static str), Ffi { code, function } }` に変更した
+- `Error::check` は `Ffi` バリアントを生成するよう変更した（呼び出し側 6 箇所の変更不要）
+- `from_i420` の `-22` 魔法数を `InvalidInput` に置き換えた
+- Display で `from_raw_os_error(-code)` を使い errno 文字列化するよう変更した
+- 変更ファイル: `src/lib.rs`（1 ファイル）
