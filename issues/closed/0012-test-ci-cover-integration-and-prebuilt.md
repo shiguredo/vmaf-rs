@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/add-ci-cover-integration-and-prebuilt
 
@@ -69,3 +70,11 @@ CI のテストカバレッジ追加で公開 API・配布物に影響しない�
 
 - リリース済みバージョンに対する prebuilt デフォルトビルドの smoke test ワークフローが存在すること
 - 初回リリース前は develop の通常 CI を失敗させない形（別ワークフロー / `workflow_dispatch` 等）で組まれていること
+
+## 解決方法
+
+- 作業 A（統合テストのコンパイル検証）: 0011 (`--workspace --all-targets`) により fmt-clippy ジョブで達成済みのため、本 issue では追加作業なし
+- 作業 B（prebuilt 経路の smoke test）: `.github/workflows/prebuilt-smoke.yml` を新規作成し、`workflow_dispatch` で手動起動可能な prebuilt 経路検証ワークフローを追加した
+  - 指定されたリリースタグを checkout してデフォルト feature でビルドし、prebuilt download が機能することを検証する
+  - source-build の確認ステップも含む
+- 変更ファイル: `.github/workflows/prebuilt-smoke.yml`（新規 1 ファイル）
