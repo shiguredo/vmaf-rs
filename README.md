@@ -49,7 +49,7 @@ Please read <https://github.com/shiguredo/oss> before use.
 sudo apt-get install -y build-essential meson ninja-build nasm xxd
 
 # macOS (xxd は Xcode CLT 付属)
-brew install meson nasm
+brew install meson ninja nasm
 ```
 
 ## ビルド
