@@ -175,7 +175,7 @@ fn download_prebuilt(out_dir: &Path) -> PathBuf {
     fs::create_dir_all(&prebuilt_dir).expect("failed to create prebuilt directory");
 
     // curl でアーカイブをダウンロード
-    eprintln!("prebuilt ライブラリをダウンロード中: {}", archive_url);
+    eprintln!("downloading prebuilt library: {}", archive_url);
     let status = Command::new("curl")
         .args(["-fsSL", "-o"])
         .arg(&archive_path)

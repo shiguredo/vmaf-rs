@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-release-concurrency-timeout
 
@@ -55,3 +56,6 @@ CI / Release の設定変更で公開 API・配布物に影響しないため、
 
 - `release.yml` のトップレベルに `concurrency: { group: release, cancel-in-progress: false }` が記述され、同一 group の同時 running が 1 本に制限されること（静的確認）
 - `github-release` と `publish` の両ジョブに `timeout-minutes` が記述されていること（静的確認）
+## 解決方法
+
+- release.yml の concurrency 設定を改善した
