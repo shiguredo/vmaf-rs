@@ -81,7 +81,7 @@ DOCS_RS=1 cargo doc --no-deps --no-default-features
 ```rust
 use shiguredo_vmaf::{BuiltinModel, Context, ContextConfig, Model, Picture};
 
-let mut ctx = Context::new(ContextConfig::new())?;
+let mut ctx = Context::new(ContextConfig::default())?;
 let model = Model::load_builtin(BuiltinModel::V061)?;
 ctx.use_model(&model)?;
 
