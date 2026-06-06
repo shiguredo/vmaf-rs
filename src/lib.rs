@@ -136,6 +136,33 @@ impl LogLevel {
     }
 }
 
+/// VMAF プーリングメソッド
+///
+/// クリップ全体のスコアを集計する方法を指定する。
+/// libvmaf の `VmafPoolingMethod` に対応する。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PoolingMethod {
+    /// 全フレームの最小値
+    Min,
+    /// 全フレームの最大値
+    Max,
+    /// 全フレームの算術平均
+    Mean,
+    /// 全フレームの調和平均
+    HarmonicMean,
+}
+
+impl PoolingMethod {
+    fn to_sys(self) -> sys::VmafPoolingMethod {
+        match self {
+            Self::Min => sys::VmafPoolingMethod_VMAF_POOL_METHOD_MIN,
+            Self::Max => sys::VmafPoolingMethod_VMAF_POOL_METHOD_MAX,
+            Self::Mean => sys::VmafPoolingMethod_VMAF_POOL_METHOD_MEAN,
+            Self::HarmonicMean => sys::VmafPoolingMethod_VMAF_POOL_METHOD_HARMONIC_MEAN,
+        }
+    }
+}
+
 /// VMAF 計算コンテキスト
 pub struct Context {
     inner: *mut sys::VmafContext,
@@ -211,6 +238,35 @@ impl Context {
         Error::check(
             unsafe { sys::vmaf_score_at_index(self.inner, model.inner, &mut score, index) },
             "vmaf_score_at_index",
+        )?;
+        Ok(score)
+    }
+
+    /// 指定範囲のフレームをプールした VMAF スコアを取得する
+    ///
+    /// `index_low` と `index_high` はプール対象フレーム範囲（両端 inclusive）。
+    /// クリップ全体のスコアを取得するには、読み込んだ最終フレームの index を
+    /// `index_high` に渡すこと。
+    pub fn score_pooled(
+        &self,
+        model: &Model,
+        method: PoolingMethod,
+        index_low: u32,
+        index_high: u32,
+    ) -> Result<f64, Error> {
+        let mut score = 0.0;
+        Error::check(
+            unsafe {
+                sys::vmaf_score_pooled(
+                    self.inner,
+                    model.inner,
+                    method.to_sys(),
+                    &mut score,
+                    index_low,
+                    index_high,
+                )
+            },
+            "vmaf_score_pooled",
         )?;
         Ok(score)
     }
