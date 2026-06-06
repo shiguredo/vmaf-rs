@@ -8,6 +8,7 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
+# cargo-fuzz によるファジング用ランタイム
 libfuzzer-sys = "0.4"
 
 [dependencies.shiguredo_vmaf]
