@@ -85,7 +85,8 @@ pub fn run_local_bench_report(bitrates_kbps: &[u32]) {
 
 /// ローカル Y4M クリップ向け: 同一ビットレートで AOM / VP8 / VP9 を比較する
 pub fn run_y4m_bench_report(path: &Path, max_frames: usize, bitrates_kbps: &[u32]) {
-    let (width, height, frames) = read_y4m_420_frames(path, max_frames).expect("Y4M read failed");
+    let (width, height, frames) =
+        read_y4m_420_frames(path, max_frames).expect("Y4M の読み込みに失敗");
 
     eprintln!();
     eprintln!(
@@ -322,7 +323,7 @@ pub fn run_y4m_matched_vmaf_report(
     tolerance: f64,
 ) {
     let (src_width, src_height, src_frames) =
-        read_y4m_420_frames(path, max_frames).expect("Y4M read failed");
+        read_y4m_420_frames(path, max_frames).expect("Y4M の読み込みに失敗");
     let resolutions = bench_resolutions_from_env();
 
     eprintln!();
@@ -376,7 +377,7 @@ pub fn run_synthetic_bench() {
 pub fn run_y4m_bench() {
     let path = require_y4m_path(y4m_path_from_env());
     let max_frames = bench_frames_from_env();
-    let (width, height, _) = read_y4m_420_frames(&path, 1).expect("Y4M header read failed");
+    let (width, height, _) = read_y4m_420_frames(&path, 1).expect("Y4M ヘッダの読み込みに失敗");
     let bitrates = bench_bitrates_for_resolution(width, height);
     run_y4m_bench_report(&path, max_frames, &bitrates);
 }

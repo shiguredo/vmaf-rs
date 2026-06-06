@@ -72,7 +72,7 @@ fn scale_i420_frame(
     };
 
     shiguredo_libyuv::i420_scale(&src, src_size, &mut dst, dst_size, FilterMode::Box)
-        .expect("I420 scale failed");
+        .expect("I420 スケールに失敗");
 
     I420Frame { y, u, v }
 }

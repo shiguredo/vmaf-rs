@@ -93,7 +93,7 @@ fn decode_h264_packets(packets: &[shiguredo_video_toolbox::EncodedFrame]) -> Vec
         .find(|packet| {
             packet.keyframe && !packet.sps_list.is_empty() && !packet.pps_list.is_empty()
         })
-        .expect("H.264 keyframe with parameter sets not found");
+        .expect("H.264 のパラメータセット付きキーフレームが見つからない");
 
     let mut decoder = Decoder::new(DecoderConfig {
         codec: DecoderCodec::H264 {
@@ -103,7 +103,7 @@ fn decode_h264_packets(packets: &[shiguredo_video_toolbox::EncodedFrame]) -> Vec
         },
         pixel_format: PixelFormat::I420,
     })
-    .expect("H.264 decoder creation failed");
+    .expect("H.264 デコーダの生成に失敗");
 
     decode_avcc_packets(&mut decoder, packets, DecoderKind::H264)
 }
@@ -117,7 +117,7 @@ fn decode_hevc_packets(packets: &[shiguredo_video_toolbox::EncodedFrame]) -> Vec
                 && !packet.sps_list.is_empty()
                 && !packet.pps_list.is_empty()
         })
-        .expect("H.265 keyframe with parameter sets not found");
+        .expect("H.265 のパラメータセット付きキーフレームが見つからない");
 
     let mut decoder = Decoder::new(DecoderConfig {
         codec: DecoderCodec::Hevc {
@@ -128,7 +128,7 @@ fn decode_hevc_packets(packets: &[shiguredo_video_toolbox::EncodedFrame]) -> Vec
         },
         pixel_format: PixelFormat::I420,
     })
-    .expect("H.265 decoder creation failed");
+    .expect("H.265 デコーダの生成に失敗");
 
     decode_avcc_packets(&mut decoder, packets, DecoderKind::Hevc)
 }
@@ -155,7 +155,7 @@ fn decode_avcc_packets(
                             pps: &packet.pps_list[0],
                             nalu_len_bytes: NALU_LEN_BYTES,
                         })
-                        .expect("H.264 decoder format update failed");
+                        .expect("H.264 デコーダのフォーマット更新に失敗");
                 }
                 DecoderKind::Hevc
                     if !packet.vps_list.is_empty()
@@ -169,7 +169,7 @@ fn decode_avcc_packets(
                             pps: &packet.pps_list[0],
                             nalu_len_bytes: NALU_LEN_BYTES,
                         })
-                        .expect("H.265 decoder format update failed");
+                        .expect("H.265 デコーダのフォーマット更新に失敗");
                 }
                 _ => {}
             }
@@ -177,11 +177,11 @@ fn decode_avcc_packets(
 
         let frame = decoder
             .decode(&packet.data)
-            .expect("Video Toolbox decode failed")
-            .expect("Video Toolbox decode returned no frame");
+            .expect("Video Toolbox デコードに失敗")
+            .expect("Video Toolbox デコードがフレームを返さなかった");
         match frame {
             DecodedFrame::I420(frame) => decoded.push(vt_i420_to_decoded(&frame)),
-            DecodedFrame::Nv12(_) => panic!("expected I420 decoded frame"),
+            DecodedFrame::Nv12(_) => panic!("I420 デコードフレームを期待したが NV12 が返された"),
         }
     }
 
@@ -199,7 +199,7 @@ fn encode_video_toolbox(
     ensure_encoding_supported(hevc);
 
     let config = realtime_encoder_config(width, height, bitrate_kbps, hevc);
-    let mut encoder = Encoder::new(config).expect("Video Toolbox encoder creation failed");
+    let mut encoder = Encoder::new(config).expect("Video Toolbox エンコーダの生成に失敗");
     let mut packets = Vec::new();
 
     for (index, frame) in frames.iter().enumerate() {
@@ -214,19 +214,19 @@ fn encode_video_toolbox(
                     force_key_frame: index == 0,
                 },
             )
-            .expect("Video Toolbox encode failed");
+            .expect("Video Toolbox エンコードに失敗");
         while let Some(encoded) = encoder
             .next_frame()
-            .expect("Video Toolbox next_frame failed")
+            .expect("Video Toolbox next_frame に失敗")
         {
             packets.push(encoded);
         }
     }
 
-    encoder.finish().expect("Video Toolbox finish failed");
+    encoder.finish().expect("Video Toolbox finish に失敗");
     while let Some(encoded) = encoder
         .next_frame()
-        .expect("Video Toolbox flush next_frame failed")
+        .expect("Video Toolbox flush next_frame に失敗")
     {
         packets.push(encoded);
     }
