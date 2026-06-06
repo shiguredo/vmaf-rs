@@ -26,8 +26,6 @@ fn valid_i420() -> impl Strategy<Value = (Vec<u8>, Vec<u8>, Vec<u8>, u32, u32)> 
 proptest! {
     /// 偶数・非ゼロかつプレーン長が整合する入力は from_i420 が成功する。
     /// 0002（奇数拒否）の適用後であり、0002 で偶数受理を保証している。
-    /// 注: 0017（ゼロ拒否）未適用のためゼロ寸法は本プロパティの範囲外。
-    /// 0017 完了後にゼロ拒否プロパティを追加する。
     #[test]
     fn from_i420_は偶数非ゼロかつプレーン長整合で成功する(
         (y, u, v, w, h) in valid_i420()
@@ -66,6 +64,19 @@ proptest! {
             .prop_map(|(w, h, yl, ul, vl)| {
                 (vec![0u8; yl], vec![0u8; ul], vec![0u8; vl], w, h)
             }),
+    ) {
+        let result = Picture::from_i420(&y, &u, &v, w, h);
+        prop_assert!(result.is_err());
+    }
+
+    /// width=0 または height=0 の場合はプレーン長に関係なく from_i420 がエラーを返す。
+    #[test]
+    fn from_i420_はゼロ寸法を拒否する(
+        y in prop::collection::vec(any::<u8>(), 0..=256),
+        u in prop::collection::vec(any::<u8>(), 0..=256),
+        v in prop::collection::vec(any::<u8>(), 0..=256),
+        (w, h) in (0u32..=256, 0u32..=256)
+            .prop_filter("少なくとも一方がゼロ", |(w, h)| *w == 0 || *h == 0),
     ) {
         let result = Picture::from_i420(&y, &u, &v, w, h);
         prop_assert!(result.is_err());
