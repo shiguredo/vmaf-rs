@@ -12,11 +12,13 @@ mod sys;
 ///
 /// # Panics
 ///
-/// `vmaf_version()` が不正な UTF-8 を返した場合にパニックする。
-/// libvmaf のバージョン文字列は常に ASCII であるため、通常は発生しない
+/// `vmaf_version()` が NULL を返した場合、または不正な UTF-8 を返した場合にパニックする。
+/// libvmaf のバージョン文字列は常に ASCII であるため、後者は通常発生しない
 pub fn version() -> &'static str {
     unsafe {
-        CStr::from_ptr(sys::vmaf_version())
+        let ptr = sys::vmaf_version();
+        assert!(!ptr.is_null(), "vmaf_version() returned null pointer");
+        CStr::from_ptr(ptr)
             .to_str()
             .expect("vmaf_version() returned invalid UTF-8")
     }
