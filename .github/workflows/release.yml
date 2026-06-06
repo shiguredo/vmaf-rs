@@ -29,6 +29,28 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
+      - name: Validate tag format and version match
+        shell: bash
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          PKG_VERSION=$(cargo metadata --format-version 1 | jq -r '.packages[0].version')
+
+          if [[ "$VERSION" =~ ^[0-9]{4}\.[0-9]+\.[0-9]+-canary\.[0-9]+$ ]]; then
+            BASE_VERSION="${VERSION%-canary.*}"
+            if [[ "$BASE_VERSION" != "$PKG_VERSION" ]]; then
+              echo "error: canary base version '${BASE_VERSION}' does not match Cargo.toml '${PKG_VERSION}'"
+              exit 1
+            fi
+          elif [[ "$VERSION" =~ ^[0-9]{4}\.[0-9]+\.[0-9]+$ ]]; then
+            if [[ "$VERSION" != "$PKG_VERSION" ]]; then
+              echo "error: tag '${VERSION}' does not match Cargo.toml version '${PKG_VERSION}'"
+              exit 1
+            fi
+          else
+            echo "error: tag '${VERSION}' does not match expected format (YYYY.MM.PP or YYYY.MM.PP-canary.N)"
+            exit 1
+          fi
+
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -47,6 +69,8 @@ jobs:
   build-prebuilt:
     name: "Build prebuilt (${{ matrix.target }})"
     needs: github-release
+    # canary タグでは prebuilt URL とタグ名が一致しないためビルドしない
+    if: ${{ !contains(needs.github-release.outputs.version, 'canary') }}
     permissions:
       contents: write
     strategy:
@@ -122,6 +146,8 @@ jobs:
 
   publish:
     needs: [github-release, build-prebuilt]
+    # canary タグは crates.io に publish しない
+    if: ${{ !contains(needs.github-release.outputs.version, 'canary') }}
     runs-on: ubuntu-24.04
     environment: release
     permissions:
