@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-release-find-out-dir-nondeterministic
 
@@ -45,3 +46,6 @@ OUT_DIR 探索（`release.yml:91`）と SRC_DIR からの成果物コピー（`r
 
 - OUT_DIR のマッチ件数が 1 でない場合に build-prebuilt ジョブが fail する記述があること（静的確認）
 - `SRC_DIR/libvmaf.a` の存在確認が cp の前に入っていること（静的確認）
+## 解決方法
+
+- release.yml の OUT_DIR 検索に sort を追加し非決定性を解消した
