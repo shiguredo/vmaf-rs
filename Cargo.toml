@@ -32,6 +32,8 @@ features = []
 default-features = false
 
 [dependencies]
+# FFI エラーログ出力 (Drop 実装等)
+tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 # コーデックラウンドトリップ + VMAF 統合テスト (tests/codec_vmaf/)
