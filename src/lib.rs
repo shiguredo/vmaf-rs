@@ -176,6 +176,11 @@ impl PoolingMethod {
 }
 
 /// VMAF 計算コンテキスト
+///
+/// 生ポインタを保持するため `!Send + !Sync` になる。
+/// libvmaf のクロススレッド安全性を保証する一次資料が無いため、
+/// 保守的に `Send` / `Sync` を実装していない。
+/// 利用者は単一スレッドから逐次利用すること。
 pub struct Context {
     inner: *mut sys::VmafContext,
 }
@@ -293,6 +298,9 @@ impl Drop for Context {
 }
 
 /// VMAF モデル
+///
+/// 生ポインタを保持するため `!Send + !Sync` になる。
+/// Context と同様の理由で `Send` / `Sync` を実装していない。
 pub struct Model {
     inner: *mut sys::VmafModel,
 }
@@ -328,6 +336,8 @@ impl Drop for Model {
 }
 
 /// 8-bit I420 ピクセルデータを保持する VMAF ピクチャ
+///
+/// 生ポインタを保持するため `!Send + !Sync` になる。
 pub struct Picture {
     inner: sys::VmafPicture,
     /// libvmaf に所有権が移譲された場合は false

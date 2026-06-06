@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-thread-safety-doc
 
@@ -38,3 +39,7 @@
 
 - `Context` / `Model` / `Picture` の 3 型の doc コメントに、`!Send + !Sync` が生ポインタ由来の自動挙動であること・libvmaf のクロススレッド保証が無いため保守的に未実装であること・単一スレッドから利用すること、が記載されていること
 - `cargo doc` が警告なく通ること
+## 解決方法
+
+- Context/Model/Picture の doc コメントに Send/Sync 未実装の根拠を追記した
+- 変更ファイル: src/lib.rs
