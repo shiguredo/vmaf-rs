@@ -80,7 +80,7 @@ fn push_aom_decoded_frames(decoded: &mut Vec<DecodedI420>, decoder: &mut Decoder
         let v_stride = frame.v_stride().expect("V ストライドの取得に失敗");
         let width = frame.width();
         let height = frame.height();
-        decoded.push(DecodedI420 {
+        decoded.push(I420Frame {
             y: pack_plane(
                 frame.y_plane().expect("Y プレーンの取得に失敗"),
                 width,
@@ -122,7 +122,7 @@ fn push_vpx_decoded_frames(decoded: &mut Vec<DecodedI420>, decoder: &mut VpxDeco
     while let Some(frame) = decoder.next_frame().expect("next_frame に失敗") {
         let width = frame.width();
         let height = frame.height();
-        decoded.push(DecodedI420 {
+        decoded.push(I420Frame {
             y: pack_plane(frame.y_plane(), width, height, frame.y_stride()),
             u: pack_plane(frame.u_plane(), width / 2, height / 2, frame.u_stride()),
             v: pack_plane(frame.v_plane(), width / 2, height / 2, frame.v_stride()),
