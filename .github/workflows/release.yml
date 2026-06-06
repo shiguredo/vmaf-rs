@@ -97,12 +97,16 @@ jobs:
 
       - name: Install build dependencies (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y build-essential meson ninja-build nasm xxd
+        run: sudo apt-get update && sudo apt-get install -y build-essential meson ninja-build xxd
+
+      - name: Install NASM (x86_64 only)
+        if: runner.os == 'Linux' && !endsWith(matrix.os, '-arm')
+        run: sudo apt-get install -y nasm
 
       - name: Install build dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install meson nasm
+          brew install meson
           command -v xxd
 
       - name: Build with source-build

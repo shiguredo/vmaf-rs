@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-ci-nasm-x86-only
 
@@ -54,3 +55,8 @@ CI / Release の設定変更で公開 API・配布物に影響しないため、
 
 - arm64 ランナー（ubuntu-*-arm、macos-26、macos-15）で nasm をインストールしないこと（YAML の静的確認 + arm64 CI ジョブが緑）
 - x86_64 ランナー（ubuntu-24.04 / ubuntu-22.04、fmt-clippy 含む）では nasm を引き続きインストールし source-build が成功すること
+## 解決方法
+
+- ci.yml / release.yml の NASM インストールを x86_64 限定にした
+- arm64/macOS から nasm を削除
+- 変更ファイル: .github/workflows/ci.yml, .github/workflows/release.yml
