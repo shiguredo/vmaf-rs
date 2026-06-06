@@ -121,7 +121,14 @@ pub unsafe fn vmaf_picture_alloc(_pic: *mut VmafPicture, _pix_fmt: VmafPixelForm
 pub unsafe fn vmaf_picture_unref(_pic: *mut VmafPicture) -> std::ffi::c_int { 0 }
 pub unsafe fn vmaf_read_pictures(_vmaf: *mut VmafContext, _ref: *mut VmafPicture, _dist: *mut VmafPicture, _index: std::ffi::c_uint) -> std::ffi::c_int { 0 }
 pub unsafe fn vmaf_score_at_index(_vmaf: *mut VmafContext, _model: *mut VmafModel, _score: *mut f64, _index: std::ffi::c_uint) -> std::ffi::c_int { 0 }
+pub unsafe fn vmaf_score_pooled(_vmaf: *mut VmafContext, _model: *mut VmafModel, _pool_method: VmafPoolingMethod, _score: *mut f64, _index_low: std::ffi::c_uint, _index_high: std::ffi::c_uint) -> std::ffi::c_int { 0 }
 pub unsafe fn vmaf_version() -> *const std::ffi::c_char { std::ptr::null() }
+
+pub type VmafPoolingMethod = u32;
+pub const VmafPoolingMethod_VMAF_POOL_METHOD_MIN: u32 = 1;
+pub const VmafPoolingMethod_VMAF_POOL_METHOD_MAX: u32 = 2;
+pub const VmafPoolingMethod_VMAF_POOL_METHOD_MEAN: u32 = 3;
+pub const VmafPoolingMethod_VMAF_POOL_METHOD_HARMONIC_MEAN: u32 = 4;
 "#,
         )
         .expect("write file error");

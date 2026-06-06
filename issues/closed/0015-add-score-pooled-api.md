@@ -3,6 +3,7 @@
 - Priority: Medium
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/add-score-pooled-api
 
@@ -84,3 +85,10 @@ pub fn vmaf_score_pooled(_vmaf: *mut VmafContext, _model: *mut VmafModel, _pool_
 - `PoolingMethod`（Min / Max / Mean / HarmonicMean）と `Context::score_pooled` が公開され、クリップ全体のプール済み VMAF スコアが取得できること
 - `build.rs` の docs.rs ダミーに `vmaf_score_pooled` と `VmafPoolingMethod` 定数が追加され、`DOCS_RS=1 cargo build` が成功すること
 - `tests/test_score.rs` に複数フレームをプールするテストがあること
+
+## 解決方法
+
+- `src/lib.rs` に `PoolingMethod` enum (Min/Max/Mean/HarmonicMean) と `Context::score_pooled` メソッドを追加した
+- `build.rs` の docs.rs ダミーに `VmafPoolingMethod` 型・定数・`vmaf_score_pooled` 関数を追加した
+- `tests/test_score.rs` に複数フレームを Mean でプールするテストを追加した
+- 変更ファイル: `src/lib.rs`、`build.rs`、`tests/test_score.rs`（3 ファイル）
