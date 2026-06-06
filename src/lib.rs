@@ -82,6 +82,7 @@ impl Error {
         if code == 0 {
             Ok(())
         } else {
+            assert!(code < 0, "libvmaf returned non-negative error code: {code}");
             Err(Self::Ffi { code, function })
         }
     }
