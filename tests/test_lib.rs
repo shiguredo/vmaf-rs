@@ -1,5 +1,5 @@
 use shiguredo_vmaf::{
-    BuiltinModel, Context, ContextConfig, LogLevel, Model, Picture, PoolingMethod, version,
+    BuiltinModel, Context, ContextConfig, Error, LogLevel, Model, Picture, PoolingMethod, version,
 };
 
 /// ダミー I420 フレームを生成する
@@ -389,4 +389,33 @@ fn 複数フレームを全プーリングメソッドで集計できる() {
         harmonic_diff < 1.0,
         "pooled HarmonicMean は score_at_index の調和平均と一致するはず: pooled={harmonic}, expected={harmonic_expected}"
     );
+}
+
+#[test]
+fn error_invalid_input_の表示が正しい() {
+    let err = Error::InvalidInput("テストメッセージ");
+    assert!(err.to_string().contains("テストメッセージ"));
+}
+
+#[test]
+fn error_ffi_の表示が正しい() {
+    let err = Error::Ffi {
+        code: -1,
+        function: "test_func",
+    };
+    let s = err.to_string();
+    assert!(
+        s.contains("test_func"),
+        "Ffi エラー表示に関数名が含まれていない: {s}"
+    );
+    assert!(
+        s.contains("failed"),
+        "Ffi エラー表示に failure 表示が含まれていない: {s}"
+    );
+}
+
+#[test]
+fn error_は_std_error_トレイトを実装している() {
+    let err = Error::InvalidInput("テスト");
+    let _: &dyn std::error::Error = &err;
 }
