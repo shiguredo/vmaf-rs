@@ -427,7 +427,7 @@ fn copy_plane(pic: &mut sys::VmafPicture, plane: usize, src: &[u8]) {
     }
 
     let expected_len = width * height;
-    debug_assert!(
+    assert!(
         src.len() >= expected_len,
         "plane {plane} buffer too small: expected at least {expected_len}, got {}",
         src.len()
@@ -435,7 +435,7 @@ fn copy_plane(pic: &mut sys::VmafPicture, plane: usize, src: &[u8]) {
 
     let stride = pic.stride[plane] as usize;
     let dst_ptr = pic.data[plane] as *mut u8;
-    debug_assert!(!dst_ptr.is_null());
+    assert!(!dst_ptr.is_null());
 
     for row in 0..height {
         let src_row = &src[row * width..(row + 1) * width];
