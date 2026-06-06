@@ -57,10 +57,19 @@ impl BuiltinModel {
 }
 
 /// エラー
+///
+/// 入力検証エラーと libvmaf FFI 由来エラーを型で区別する。
 #[derive(Debug)]
-pub struct Error {
-    code: c_int,
-    function: &'static str,
+pub enum Error {
+    /// クレート側の入力検証エラー
+    InvalidInput(&'static str),
+    /// libvmaf FFI 由来エラー (負の errno code)
+    Ffi {
+        /// libvmaf が返した負の errno code
+        code: c_int,
+        /// エラーを返した C 関数名
+        function: &'static str,
+    },
 }
 
 impl Error {
@@ -68,14 +77,21 @@ impl Error {
         if code == 0 {
             Ok(())
         } else {
-            Err(Self { code, function })
+            Err(Self::Ffi { code, function })
         }
     }
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}() failed: code={}", self.function, self.code)
+        match self {
+            Error::InvalidInput(msg) => write!(f, "{msg}"),
+            Error::Ffi { code, function } => write!(
+                f,
+                "{function}() failed: {}",
+                std::io::Error::from_raw_os_error(-code)
+            ),
+        }
     }
 }
 
@@ -335,10 +351,9 @@ impl Picture {
         // 偶数寸法のみを受理する。偶数なら div_ceil(n, 2) と n/2 (floor) が一致し、
         // 検証・コピー (copy_plane) ・libvmaf の確保寸法がすべて同一になる。
         if !width.is_multiple_of(2) || !height.is_multiple_of(2) {
-            return Err(Error {
-                code: -22, // EINVAL
-                function: "Picture::from_i420",
-            });
+            return Err(Error::InvalidInput(
+                "width and height must be even for I420 chroma subsampling",
+            ));
         }
 
         let y_size = (width as usize) * (height as usize);
@@ -347,10 +362,9 @@ impl Picture {
         let uv_size = uv_width * uv_height;
 
         if y.len() != y_size || u.len() != uv_size || v.len() != uv_size {
-            return Err(Error {
-                code: -22, // EINVAL
-                function: "Picture::from_i420",
-            });
+            return Err(Error::InvalidInput(
+                "plane size does not match width and height",
+            ));
         }
 
         let mut inner = MaybeUninit::<sys::VmafPicture>::zeroed();
