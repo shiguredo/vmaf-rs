@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-buildrs-log-message-english
 
@@ -30,3 +31,6 @@
 
 - `build.rs:171` のログメッセージが英語になっていること
 - コメントを除くログ / エラー行（`eprintln!` / `println!` / `panic!` / `expect`）に日本語が残っていないこと（`grep -nP '[ぁ-んァ-ヶ一-龥]' build.rs | grep -E 'eprintln|println|panic|expect'` が 0 件）
+## 解決方法
+
+- build.rs:171 のログメッセージを英語に修正した
