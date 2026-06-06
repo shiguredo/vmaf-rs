@@ -143,7 +143,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          gh release upload ${{ needs.github-release.outputs.version }} \
+          gh release upload "${{ needs.github-release.outputs.version }}" \
             vmaf-${{ matrix.target }}.tar.gz \
             vmaf-${{ matrix.target }}.tar.gz.sha256 \
             --clobber

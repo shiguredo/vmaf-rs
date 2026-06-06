@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-remove-self-evident-comments
 
@@ -61,3 +62,6 @@
 - 上記の自明なコメント（`build.rs:170, 182, 193, 196, 208, 217, 308, 335`）が削除されていること
 - 意図・根拠・理由を説明するコメント、および AGENTS.md:121 / :137 が要求するコメントは残っていること
 - `cargo build` が通ること
+## 解決方法
+
+- build.rs の自明なコメントを削除した

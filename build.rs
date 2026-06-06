@@ -259,14 +259,6 @@ fn compute_sha256(path: &Path) -> String {
             .arg(path)
             .output()
             .expect("failed to execute shasum. Ensure shasum is installed")
-    } else if cfg!(target_os = "windows") {
-        // Windows: certutil を使用
-        Command::new("certutil")
-            .args(["-hashfile"])
-            .arg(path)
-            .arg("SHA256")
-            .output()
-            .expect("failed to execute certutil")
     } else {
         // Linux: sha256sum を使用
         Command::new("sha256sum")
@@ -280,25 +272,12 @@ fn compute_sha256(path: &Path) -> String {
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
-    if cfg!(target_os = "windows") {
-        // certutil 出力形式:
-        // SHA256 hash of <file>:
-        // <hash>
-        // CertUtil: -hashfile command completed successfully.
-        stdout
-            .lines()
-            .nth(1)
-            .expect("unexpected certutil output format")
-            .trim()
-            .to_lowercase()
-    } else {
-        // shasum / sha256sum 出力形式: <hash>  <filename>
-        stdout
-            .split_whitespace()
-            .next()
-            .expect("unexpected shasum/sha256sum output format")
-            .to_lowercase()
-    }
+    // shasum / sha256sum 出力形式: <hash>  <filename>
+    stdout
+        .split_whitespace()
+        .next()
+        .expect("unexpected shasum/sha256sum output format")
+        .to_lowercase()
 }
 
 // ソースからビルドする
