@@ -3,6 +3,7 @@
 - Priority: Low
 - Created: 2026-05-29
 - Polished: 2026-06-06
+- Completed: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/add-builtin-model-4k-neg
 
@@ -35,3 +36,7 @@
 - `BuiltinModel` に `V4k061Neg` バリアントと doc コメントが追加され、`version_str` が `"vmaf_4k_v0.6.1neg"` を返すこと
 - コメントの根拠（built_in_models）と enum の網羅が一致すること
 - `Model::load_builtin(BuiltinModel::V4k061Neg)` が成功する単体テストがあること
+## 解決方法
+
+- `BuiltinModel` に `V4k061Neg` バリアントと `version_str` マッチを追加した
+- 変更ファイル: `src/lib.rs`（1 ファイル）
