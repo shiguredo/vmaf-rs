@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/change-from-i420-reject-zero-dimension
 
@@ -43,4 +43,3 @@
 
 - width / height = 0 が `from_i420` で `Error::InvalidInput` として明示的に拒否されること
 - 上記の境界値・回帰の単体テストが追加されていること
-- `CHANGES.md` の `## develop` に `[CHANGE]` エントリを `- @voluntas` 付きで追記すること

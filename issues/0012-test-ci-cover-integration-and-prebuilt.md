@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/add-ci-cover-integration-and-prebuilt
 
@@ -19,8 +19,8 @@ CI が `--test test_score` のみを実行し、統合テスト `tests/test_code
 ## 現状（行番号は実ファイルと一致を確認済み）
 
 - `ci.yml:67`: 全マトリクスで `cargo test --features source-build --test test_score` のみ。`tests/test_codec_vmaf/`（dev-dependencies の aom / libvpx / libyuv / video_toolbox を使用）はコンパイルされず、API 破壊や依存破壊を検知できない
-- CI の全ジョブが `--features source-build` か `--no-default-features` で、デフォルトの prebuilt download 経路（`build.rs:104-175`）を実行するジョブが存在しない
-- `release.yml:57` の macOS prebuilt は macos-15 のみだが `ci.yml:48` の test は macos-26 も対象。アーカイブ名 `vmaf-macos_arm64.tar.gz`（`build.rs:312`）は OS バージョン非依存で 404 にはならない
+- CI の全ジョブが `--features source-build` か `--no-default-features` で、デフォルトの prebuilt download 経路（`build.rs:157-179`）を実行するジョブが存在しない
+- `release.yml:65` の macOS prebuilt は macos-15 のみだが `ci.yml:48` の test は macos-26 も対象。アーカイブ名 `vmaf-macos_arm64.tar.gz`（`build.rs:161`）は OS バージョン非依存で 404 にはならない
 
 ## 設計方針
 
@@ -34,12 +34,12 @@ CI が `--test test_score` のみを実行し、統合テスト `tests/test_code
 
 ### 作業 B: prebuilt 経路の smoke test（初回リリース後にのみ有効）
 
-prebuilt download は `releases/download/{CARGO_PKG_VERSION}/`（`build.rs:104-113`）から取得する。version 2026.0.0 はまだリリースされておらず（git tag なし）、対応するアセットが存在しないため、**初回リリースが完了するまで prebuilt の smoke test は物理的に実行できない**（404 で `build.rs:128-130` が panic する）。
+prebuilt download は `releases/download/{CARGO_PKG_VERSION}/`（`build.rs:157-160`）から取得する。version 2026.0.0 はまだリリースされておらず（git tag なし）、対応するアセットが存在しないため、**初回リリースが完了するまで prebuilt の smoke test は物理的に実行できない**（404 で `build.rs:179` が panic する）。
 
 実現手段は次のいずれか。
 
 - リリース済みタグを checkout してデフォルト feature でビルドするワークフローを別途持つ。タグ上では `CARGO_PKG_VERSION` が公開済みアセットと一致するため、build.rs を変更せず prebuilt 経路を検証できる。`workflow_dispatch` か scheduled で起動する
-- もしくは `build.rs` にダウンロード元 version を上書きする env（`VMAF_TARGET`（`build.rs:302`）の version 版）を新設し、任意の released version を指す。こちらは build.rs 改修を伴う
+- もしくは `build.rs` にダウンロード元 version を上書きする env（`VMAF_TARGET`（`build.rs:352`）の version 版）を新設し、任意の released version を指す。こちらは build.rs 改修を伴う
 
 初回リリース前にこのジョブを develop の通常 CI に入れると必ず失敗するため、初回リリース後に有効化する（それまでは追加しない、または `workflow_dispatch` 限定）。
 

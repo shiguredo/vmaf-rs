@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-ci-clippy-all-targets
 
@@ -21,23 +21,42 @@ CI と prek の clippy が `--lib` のみで、`tests/` 配下のテストコー
 - `--lib` 指定により `tests/test_score.rs`、`tests/test_codec_vmaf/`（dev-dependencies の aom / libvpx / libyuv / video_toolbox をリンクするマルチファイルのテストバイナリ）が clippy 対象外
 - `Makefile:37` に `clippy-all`（`--workspace --all-targets`）が既にあるが CI / prek では使われていない
 
-### build.rs は既に lint されている（当初の前提を訂正）
+### build.rs は既に lint 対象
 
-当初 issue は「build.rs が lint されていない」を主目的にしていたが、これは誤り。clippy 0.1.95 で実機確認した結果、`cargo clippy --lib` でも build.rs はビルドスクリプトとして常にコンパイルされ clippy 対象になる（ターゲット選択フラグ `--lib` / `--all-targets` とは独立）。`--all-targets` が新たに追加するのは tests / examples / benches であって build.rs ではない。したがって本 issue で広げる対象は build.rs ではなく `tests/`。
-
-なお `cargo clippy -- -D warnings` の `-D warnings` がビルドスクリプト（build.rs）の警告まで deny するかは、ビルドスクリプトへのフラグ伝播の挙動に依存するため、build.rs の警告を CI で fail させたい場合は別途 `Cargo.toml` の `[lints]` 設定が要るか実装時に確認する（本 issue のスコープは tests/ の lint だが、確認事項として記す）。
+`cargo clippy --lib` でも build.rs はビルドスクリプトとして常にコンパイルされ clippy 対象になる（`--lib` / `--all-targets` とは独立）。したがって本 issue で広げる対象は `tests/` である。
 
 ## 設計方針
 
 CI（`ci.yml:35`）と prek（`prek.toml:32`）の clippy を `--all-targets` に拡張し、テストコードを lint 対象にする。テストの実行は不要でも lint（コンパイル）はかける。
 
-### CI コストの評価（要確定）
+### CI コストとテスト対象範囲の確定
 
-`--all-targets` は `tests/test_codec_vmaf/` をコンパイルするため、dev-dependencies（aom / libvpx / libyuv / macOS では video_toolbox）とそのネイティブビルドツールが clippy ジョブでも必要になる。`fmt-clippy` ジョブ（`ci.yml:22-35`）は現状 `--lib` で dev-dependencies をビルドしておらず、かつ `test` ジョブの `needs` 先（クリティカルパス）。`--all-targets` 化で数分規模のコスト増があり得る。`tests/test_codec_vmaf/` まで lint 対象に含めるか、軽量な `test_score.rs` のみに絞るかを 0012（統合テストの CI カバレッジ）と整合させて確定する。重い統合テストを含めるなら、必要な dev-dependencies ビルドツールを `fmt-clippy` ジョブに追加する。
+`--all-targets` は `tests/` 全体をコンパイルするため、dev-dependencies（aom / libvpx / libyuv / macOS では video_toolbox）とそのネイティブビルドツール（cmake, perl, nasm 等）が clippy ジョブでも必要になる。`fmt-clippy` ジョブ（`ci.yml:22-35`）は現状 `--lib` で dev-dependencies をビルドしておらず、かつ `test` ジョブの `needs` 先（クリティカルパス）である。
+
+検討すべき選択肢を以下に列挙する:
+
+| 選択肢 | clippy 対象 | fmt-clippy ジョブへの追加 | ビルド時間 |
+|--------|------------|--------------------------|-----------|
+| A | `--all-targets`（test_score + test_codec_vmaf 両方） | cmake, perl, nasm | 数分増 |
+| B | `--tests --exclude test_codec_vmaf`（test_score のみ） | 追加不要（既存の build-essential, meson, nasm で賄える） | ほぼ不変 |
+| C | `--lib --tests`（lib + test_score のみ） | 追加不要 | ほぼ不変 |
+
+**選択肢 B を採用する**: `cargo clippy --all-targets --features source-build -- -D warnings`。`--all-targets` はすべてのテストバイナリを対象にするが、`test_codec_vmaf` の dev-dependencies ビルドツール（cmake, perl 等）は `fmt-clippy` ジョブに `apt install cmake` を追加して対応する。0012 との擦り合わせは必要に応じて行う。
 
 ### --workspace の扱い
 
-`Cargo.toml` に現状 `[workspace]` が無いため `--workspace` は no-op。0006（PBT 導入で workspace 化 + pbt member 追加）が先に入った場合のみ `--workspace` が意味を持ち pbt も lint 対象になる。0006 の workspace 化を前提にするか否かを明記して `--workspace` の要否を決める。
+`Cargo.toml` に現状 `[workspace]` が無いため `--workspace` は no-op。0006（PBT 導入）で workspace 化された場合は `--workspace` を追加し、pbt クレートも lint 対象にする。0006 が導入されていない場合は `--workspace` を付けずに `--all-targets` のみとする。
+
+### prek の扱い
+
+prek の clippy フック（`prek.toml:32`）は pre-commit で実行されるため、実行時間が開発体験に直結する。`--all-targets` 化で `test_codec_vmaf` のネイティブビルドが走ると commit ごとに数分の待ち時間が発生する可能性がある。以下の方針とする:
+
+- prek の clippy は `--lib --features source-build -- -D warnings` のまま維持する（テスト全体のビルドは pre-commit に重すぎる）
+- CI の clippy のみ `--all-targets` に拡張する
+
+### Makefile の整合
+
+0009 適用後の Makefile では、`clippy`（`--lib`）と `clippy-all`（`--workspace --all-targets`）の 2 ターゲットが存在する。本 issue ではこれらのターゲット構成は維持し、`clippy-all` のフラグを CI の方針に合わせて調整する（`--workspace` の要否は 0006 の状況次第）。
 
 ### clippy.toml との関係
 
@@ -45,17 +64,13 @@ CI（`ci.yml:35`）と prek（`prek.toml:32`）の clippy を `--all-targets` �
 
 ## 関連 issue との整合
 
-- 0009（Makefile clippy のダッシュ記法修正）が先に入る前提。0009 が `Makefile` の clippy ターゲットの `-- --` を `--` に直し `.PHONY` に `clippy-all` を追加する。本 issue は 0009 完了後に着手し、Makefile の clippy（`--lib`）/ clippy-all（`--all-targets`）の 2 ターゲットを CI 方針に合わせて最終形を決める（行番号は 0009 適用後に確認）
-- 0012 とは「`tests/test_codec_vmaf/` の CI コンパイル」を共有する。0011 = clippy（lint）、0012 = テスト実行、と役割を分け、重い dev-dependencies のビルドを CI に持ち込む方針を擦り合わせる
-- CHANGES.md:36 に `[UPDATE] CI / prek の clippy と test をライブラリ (--lib, --test test_score) のみ対象にする` という本 issue が打ち消す向きの既存エントリがある。本 issue で範囲を広げると矛盾するため、このエントリの更新を 0007（CHANGES.md 整合）と調整する
-
-## CHANGES.md
-
-CI / prek の lint 設定変更で公開 API・配布物に影響しないため、CHANGES.md への新規記載は不要とする。ただし上記のとおり既存の CHANGES.md:36 エントリとの整合は 0007 と調整する。
+- 0009（Makefile clippy のダッシュ記法修正）が先に入る前提
+- 0012 とは「`tests/test_codec_vmaf/` の CI コンパイル」を共有する。0011 = clippy（lint）、0012 = テスト実行、と役割を分ける
 
 ## 完了条件
 
-- `ci.yml:35` と `prek.toml:32` の clippy が `tests/` を lint 対象にしていること（`--all-targets` 等）
-- `tests/test_codec_vmaf/` を lint 対象に含めるか否かが確定し、含めるなら必要な dev-dependencies ビルドツールが `fmt-clippy` ジョブに追加されていること
-- CI / prek / Makefile の clippy 引数の最終形（各ファイルの具体的なコマンド、Makefile の clippy / clippy-all 2 ターゲットを統合するか残置するか）が列挙され整合していること
-- 意図的に lint 違反を入れたテストコードで CI clippy が fail すること（ゲートが機能することの確認）
+- `ci.yml:35` の clippy が `--all-targets` になっており、`tests/` を lint 対象にしていること
+  - `fmt-clippy` ジョブに dev-dependencies ビルドツール（`cmake`）が追加されていること
+- `prek.toml:32` の clippy は `--lib` のままであること（pre-commit 実行時間への配慮）
+- Makefile の `clippy-all` が CI のフラグ（`--all-targets`、workspace 化後は `--workspace --all-targets`）と整合していること
+- CI clippy が `tests/` の lint 違反を検出して fail すること

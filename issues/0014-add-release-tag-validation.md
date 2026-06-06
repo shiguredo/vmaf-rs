@@ -2,7 +2,7 @@
 
 - Priority: Medium
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/add-release-tag-validation
 
@@ -17,10 +17,10 @@
 ## 現状（行番号は実ファイルと一致を確認済み）
 
 - `release.yml:5-6`: `tags: "*"` で任意タグが発火する
-- `release.yml:21-23`: `get_version` は `refs/tags/` を剥がすだけで、バージョン形式や `Cargo.toml:3`（version = `2026.0.0`）との一致を検証しない
-- `release.yml:29`: canary 判定は `contains(VERSION, 'canary')` で prerelease にするだけ
-- `release.yml:116-128`: publish ジョブは canary でも無条件で走り、canary を crates.io に publish しようとする
-- `build.rs:104-113`: prebuilt download URL は `releases/download/{CARGO_PKG_VERSION}/`（= `2026.0.0`、Cargo.toml 由来・タグ非依存）を使う。一方 `release.yml:111` の `gh release upload` はタグ名（`needs.github-release.outputs.version`）にアップロードする。タグ名と `CARGO_PKG_VERSION` が一致しないとアセットの置き場所と取得先が食い違う
+- `release.yml:28-30`: `get_version` は `refs/tags/` を剥がすだけで、バージョン形式や `Cargo.toml:3`（version = `2026.0.0`）との一致を検証しない
+- `release.yml:36`: canary 判定は `contains(VERSION, 'canary')` で prerelease にするだけ
+- `release.yml:123-135`: publish ジョブは canary でも無条件で走り、canary を crates.io に publish しようとする
+- `build.rs:157-160`: prebuilt download URL は `releases/download/{CARGO_PKG_VERSION}/`（= `2026.0.0`、Cargo.toml 由来・タグ非依存）を使う。一方 `release.yml:118` の `gh release upload` はタグ名（`needs.github-release.outputs.version`）にアップロードする。タグ名と `CARGO_PKG_VERSION` が一致しないとアセットの置き場所と取得先が食い違う
 
 ## タグ命名規則（本 issue で確定する）
 
@@ -35,7 +35,7 @@ CalVer 運用ではリリースのたびにタグを打つ前に `Cargo.toml` �
 
 ### バージョン検証
 
-`github-release` ジョブの `get_version`（`release.yml:21-23`）直後に検証ステップを追加する。`Cargo.toml` の version を `cargo metadata --format-version 1 | jq -r '.packages[0].version'` 等で取得し、タグと照合する。
+`github-release` ジョブの `get_version`（`release.yml:28-30`）直後に検証ステップを追加する。`Cargo.toml` の version を `cargo metadata --format-version 1 | jq -r '.packages[0].version'` 等で取得し、タグと照合する。
 
 - 通常タグ: タグ == `Cargo.toml` version でなければ `exit 1`
 - canary タグ: `-canary.N` を除いたベース部分が `Cargo.toml` version と一致しなければ `exit 1`
@@ -45,14 +45,14 @@ CalVer 運用ではリリースのたびにタグを打つ前に `Cargo.toml` �
 
 ### canary publish ガード
 
-publish ジョブ（`release.yml:116-128`）に条件を付けて canary ではスキップする。
+publish ジョブ（`release.yml:123-135`）に条件を付けて canary ではスキップする。
 
 ```yaml
 publish:
     if: ${{ !contains(needs.github-release.outputs.version, 'canary') }}
 ```
 
-`slack_notify`（`release.yml:131-`）は `needs: [..., publish]` かつ `if: always()` のため、publish が skip された場合に skip を failure 扱いしないことを確認する。
+`slack_notify`（`release.yml:137-151`）は `needs: [..., publish]` かつ `if: always()` のため、publish が skip された場合に skip を failure 扱いしないことを確認する。
 
 ### canary 時の build-prebuilt（要判断）
 

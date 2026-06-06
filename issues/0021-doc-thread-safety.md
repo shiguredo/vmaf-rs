@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-thread-safety-doc
 

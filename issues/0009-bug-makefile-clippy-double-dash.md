@@ -1,8 +1,8 @@
-# Makefile の clippy がダブルダッシュで常にエラー終了する
+# Makefile の clippy ダブルダッシュと `.PHONY` 漏れを修正する
 
 - Priority: Medium
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/fix-makefile-clippy-double-dash
 
@@ -19,10 +19,13 @@
 `Makefile:33`（clippy）と `Makefile:37`（clippy-all）が `-- --` を含む。
 
 ```make
+# Makefile:33（clippy） — 誤
 cargo clippy --lib --features source-build -- -- -D warnings
+# Makefile:37（clippy-all） — 誤、--workspace --all-targets はテストとベンチも対象にする意図
+cargo clippy --workspace --all-targets --features source-build -- -- -D warnings
 ```
 
-`cargo clippy` では最初の `--` が cargo 引数とコンパイラ（clippy-driver / rustc）引数の区切りで、それ以降がコンパイラに渡る。`-- --` だと 2 つ目の `--` 以降の `-D warnings` がコンパイラに **入力ファイル名** として渡され、`error: multiple input filenames provided`（`src/lib.rs` と `-D` 等が複数の入力ファイルとして解釈される）で clean なコードでも exit 101 になる。clippy 0.1.95 で実機確認済み。
+`cargo clippy` では最初の `--` が cargo 引数とコンパイラ（clippy-driver / rustc）引数の区切りで、それ以降がコンパイラに渡る。`-- --` だと 2 つ目の `--` 以降の `-D warnings` がコンパイラに **入力ファイル名** として渡され、`error: multiple input filenames provided` で clean なコードでも exit 101 になる。
 
 正しくは単一 `--` の `cargo clippy ... -- -D warnings`。`ci.yml:35` と `prek.toml:32` はこの正しい形を使っている。
 
@@ -30,9 +33,9 @@ cargo clippy --lib --features source-build -- -- -D warnings
 
 `Makefile:33`（clippy）と `Makefile:37`（clippy-all）の `-- -- -D warnings` を `-- -D warnings` に修正する。
 
-あわせて `Makefile:1` の `.PHONY` に `clippy-all` を追加する（`clippy-all` ターゲットを本 issue で編集するため。現状 `.PHONY` には `clippy` のみで `clippy-all` が抜けている）。`cover` も `.PHONY` 未登録だが本 issue のスコープ外とする。
+あわせて `Makefile:1` の `.PHONY` に `clippy-all` と `cover` を追加する（`.PHONY` 未登録の全ターゲットを一括修正する）。
 
-CHANGES.md への記載は不要とする。`Makefile` は `Cargo.toml:12-18` の `include` に含まれない非配布の開発ツールで、公開 API・配布物に影響しない。
+`Makefile` は非配布の開発ツールのため、CHANGES.md への記載は不要とする。
 
 ## 関連 issue との切り分け
 
@@ -41,7 +44,7 @@ CHANGES.md への記載は不要とする。`Makefile` は `Cargo.toml:12-18` �
 ## 完了条件
 
 - `Makefile:33, 37` が単一 `--`（`-- -D warnings`）になっていること
-- `clippy-all` が `Makefile:1` の `.PHONY` に登録されていること
-- warning のない clean なコードで `make clippy` / `make clippy-all` が成功すること（exit 0）
-- 意図的に warning を入れたコードで `make clippy` が失敗すること（deny が効くこと）
+- `clippy-all` と `cover` が `Makefile:1` の `.PHONY` に登録されていること
+- `make clippy` と `make clippy-all` が現在の develop HEAD で成功すること（exit 0）
+- `src/lib.rs` に `let unused = 1;` 等の意図的な warning を入れた状態で `make clippy` が失敗すること（`-D warnings` が効くこと）
 - ダッシュ記法が `ci.yml:35` / `prek.toml:32` と一致すること

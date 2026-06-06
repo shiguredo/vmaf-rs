@@ -2,7 +2,7 @@
 
 - Priority: Low
 - Created: 2026-05-29
-- Polished: 2026-05-29
+- Polished: 2026-06-06
 - Model: Opus 4.8
 - Branch: feature/refactor-context-config-new-default
 
@@ -43,4 +43,3 @@
 - `ContextConfig::new()` が削除され `Default` に一本化されていること
 - 呼び出し 5 箇所（`tests/test_score.rs:54, 84, 112, 138`、`tests/test_codec_vmaf/vmaf.rs:14`）が `ContextConfig::default()` に更新され `cargo test` がビルド・通過すること
 - `cargo clippy` が警告なしであること
-- `CHANGES.md` の `## develop`（`### misc`）にエントリを `- @voluntas` 付きで追記すること
