@@ -1,5 +1,5 @@
 use shiguredo_vmaf::{
-    BuiltinModel, Context, ContextConfig, Model, Picture, PoolingMethod, version,
+    BuiltinModel, Context, ContextConfig, LogLevel, Model, Picture, PoolingMethod, version,
 };
 
 /// ダミー I420 フレームを生成する
@@ -293,5 +293,100 @@ fn 複数フレームを_mean_でプールできる() {
     assert!(
         diff < 0.1,
         "pooled Mean は score_at_index の平均と一致するはず: pooled={pooled}, expected={mean_expected}"
+    );
+}
+
+#[test]
+fn 全組み込みモデルをロードできる() {
+    // BV063 (vmaf_b_v0.6.3) はフリービルド版 libvmaf に含まれていないため除外
+    let models = [
+        (BuiltinModel::V061, "V061"),
+        (BuiltinModel::V061Neg, "V061Neg"),
+        (BuiltinModel::V4k061, "V4k061"),
+        (BuiltinModel::V4k061Neg, "V4k061Neg"),
+    ];
+    let mut failures = Vec::new();
+    for (model, name) in models {
+        if let Err(e) = Model::load_builtin(model) {
+            failures.push(format!("{name}: {e}"));
+        }
+    }
+    assert!(
+        failures.is_empty(),
+        "ロードに失敗したモデル:\n{}",
+        failures.join("\n")
+    );
+}
+
+#[test]
+fn 全ログレベルでコンテキストを生成できる() {
+    for level in [
+        LogLevel::None,
+        LogLevel::Error,
+        LogLevel::Warning,
+        LogLevel::Info,
+        LogLevel::Debug,
+    ] {
+        let config = ContextConfig {
+            log_level: level,
+            ..ContextConfig::default()
+        };
+        let _ = Context::new(config).expect("Context の生成に失敗");
+    }
+}
+
+#[test]
+fn 複数フレームを全プーリングメソッドで集計できる() {
+    let width = 192;
+    let height = 108;
+    let frame_count: u32 = 3;
+
+    let mut ctx = Context::new(ContextConfig::default()).expect("Context の生成に失敗");
+    let model = Model::load_builtin(BuiltinModel::V061).expect("Model の読み込みに失敗");
+    ctx.use_model(&model).expect("use_model に失敗");
+
+    for i in 0..frame_count {
+        let (y, u, v) = generate_dummy_i420(width, height, i as usize);
+        let (dy, du, dv) = generate_degraded_i420(width, height, i as usize);
+        let ref_pic = Picture::from_i420(&y, &u, &v, width as u32, height as u32)
+            .expect("ref Picture の生成に失敗");
+        let dist_pic = Picture::from_i420(&dy, &du, &dv, width as u32, height as u32)
+            .expect("dist Picture の生成に失敗");
+        ctx.read_pictures(Some(ref_pic), Some(dist_pic), i)
+            .expect("read_pictures に失敗");
+    }
+    ctx.read_pictures(None, None, 0).expect("flush に失敗");
+
+    let mut scores = Vec::new();
+    for i in 0..frame_count {
+        let score = ctx
+            .score_at_index(&model, i)
+            .expect("score_at_index に失敗");
+        scores.push(score);
+    }
+
+    let min = ctx
+        .score_pooled(&model, PoolingMethod::Min, 0, frame_count - 1)
+        .expect("score_pooled Min に失敗");
+    let max = ctx
+        .score_pooled(&model, PoolingMethod::Max, 0, frame_count - 1)
+        .expect("score_pooled Max に失敗");
+    let mean = ctx
+        .score_pooled(&model, PoolingMethod::Mean, 0, frame_count - 1)
+        .expect("score_pooled Mean に失敗");
+    let harmonic = ctx
+        .score_pooled(&model, PoolingMethod::HarmonicMean, 0, frame_count - 1)
+        .expect("score_pooled HarmonicMean に失敗");
+
+    assert!(
+        min <= mean && mean <= max,
+        "Min <= Mean <= Max が成立するはず: min={min}, mean={mean}, max={max}"
+    );
+
+    let harmonic_expected = scores.len() as f64 / scores.iter().map(|s| 1.0 / s).sum::<f64>();
+    let harmonic_diff = (harmonic - harmonic_expected).abs();
+    assert!(
+        harmonic_diff < 1.0,
+        "pooled HarmonicMean は score_at_index の調和平均と一致するはず: pooled={harmonic}, expected={harmonic_expected}"
     );
 }
