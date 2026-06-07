@@ -23,7 +23,16 @@ Please read <https://github.com/shiguredo/oss> before use.
 ## 特徴
 
 - フルリファレンス VMAF スコア計算 (8-bit I420)
-- 組み込み VMAF モデル対応
+  - フレーム単位スコア (`score_at_index`)
+  - 範囲プーリングスコア (`score_pooled`): 最小値 / 最大値 / 算術平均 / 調和平均
+- 組み込み VMAF モデル対応 (全 5 モデル)
+  - `V061`: デフォルトモデル (vmaf_v0.6.1)
+  - `BV063`: ブートストラップモデル (vmaf_b_v0.6.3)
+  - `V061Neg`: NEG モードモデル (vmaf_v0.6.1neg)
+  - `V4k061`: 4K 向けモデル (vmaf_4k_v0.6.1)
+  - `V4k061Neg`: 4K 向け NEG モードモデル (vmaf_4k_v0.6.1neg)
+- ログレベル制御 (`LogLevel`: None / Error / Warning / Info / Debug)
+- libvmaf バージョン情報 (`version()`)
 - prebuilt バイナリによる高速ビルド (デフォルト)
 - ソースからのビルドも可能 (`--features source-build`)
 
@@ -79,20 +88,34 @@ DOCS_RS=1 cargo doc --no-deps --no-default-features
 ## 使い方
 
 ```rust
-use shiguredo_vmaf::{BuiltinModel, Context, ContextConfig, Model, Picture};
+use shiguredo_vmaf::{
+    BuiltinModel, Context, ContextConfig, LogLevel, Model, Picture, PoolingMethod,
+};
 
-let mut ctx = Context::new(ContextConfig::default())?;
+// libvmaf のバージョンを確認
+println!("libvmaf version: {}", shiguredo_vmaf::version());
+
+let mut ctx = Context::new(ContextConfig {
+    log_level: LogLevel::Warning,
+    n_threads: 4,
+    ..ContextConfig::default()
+})?;
 let model = Model::load_builtin(BuiltinModel::V061)?;
 ctx.use_model(&model)?;
 
-let (y, u, v) = /* I420 ピクセルデータ */;
-let ref_pic = Picture::from_i420(&y, &u, &v, width, height)?;
-let dist_pic = Picture::from_i420(&y, &u, &v, width, height)?;
+// 複数フレームの I420 データを読み込む
+for frame_index in 0..num_frames {
+    let (y_ref, u_ref, v_ref) = /* 参照フレームの I420 プレーンデータ */;
+    let (y_dist, u_dist, v_dist) = /* 劣化フレームの I420 プレーンデータ */;
 
-ctx.read_pictures(Some(ref_pic), Some(dist_pic), 0)?;
+    let ref_pic = Picture::from_i420(&y_ref, &u_ref, &v_ref, width, height)?;
+    let dist_pic = Picture::from_i420(&y_dist, &u_dist, &v_dist, width, height)?;
+    ctx.read_pictures(Some(ref_pic), Some(dist_pic), frame_index)?;
+}
 ctx.read_pictures(None, None, 0)?; // flush
 
-let score = ctx.score_at_index(&model, 0)?;
+// クリップ全体の算術平均スコアを取得
+let score = ctx.score_pooled(&model, PoolingMethod::Mean, 0, num_frames - 1)?;
 println!("VMAF score: {score}");
 ```
 
