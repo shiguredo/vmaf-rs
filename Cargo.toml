@@ -19,8 +19,9 @@ include = [
 
 # 以降は外部ライブラリビルド用のメタデータ
 # (この内容は build.rs の中からのみ参照される)
-[package.metadata.external-dependencies]
-vmaf = { url = "https://github.com/Netflix/vmaf", version = "v3.1.0" }
+[package.metadata.external-dependencies.vmaf]
+url = "https://github.com/Netflix/vmaf"
+version = "v3.1.0"
 
 [package.metadata.docs.rs]
 features = []
@@ -52,5 +53,4 @@ shiguredo_toml = "2026.2"
 shiguredo_video_toolbox = "2026.1"
 
 [features]
-default = []
 source-build = []
