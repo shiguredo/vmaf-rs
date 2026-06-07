@@ -7,16 +7,16 @@ publish = false
 [package.metadata]
 cargo-fuzz = true
 
+[[bin]]
+doc = false
+name = "from_i420"
+path = "fuzz_targets/from_i420.rs"
+test = false
+bench = false
+
 [dependencies]
 # cargo-fuzz によるファジング用ランタイム
 libfuzzer-sys = "0.4"
 
 [dependencies.shiguredo_vmaf]
 path = ".."
-
-[[bin]]
-name = "from_i420"
-path = "fuzz_targets/from_i420.rs"
-test = false
-doc = false
-benches = false
