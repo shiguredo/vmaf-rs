@@ -8,11 +8,11 @@ publish = false
 cargo-fuzz = true
 
 [[bin]]
+bench = false
 doc = false
 name = "from_i420"
 path = "fuzz_targets/from_i420.rs"
 test = false
-bench = false
 
 [dependencies]
 # cargo-fuzz によるファジング用ランタイム
