@@ -37,10 +37,10 @@ tracing = { version = "0.1", default-features = false, features = ["std"] }
 
 [dev-dependencies]
 # コーデックラウンドトリップ + VMAF 統合テスト (tests/codec_vmaf/)
-shiguredo_aom = "2026.1"
-shiguredo_libvpx = "2026.1"
+shiguredo_aom = "2026.2.0-canary.5"
+shiguredo_libvpx = "2026.2.0-canary.1"
 # I420 スケーリング等のピクセル処理 (tests/test_codec_vmaf/)
-shiguredo_libyuv = "2026.1"
+shiguredo_libyuv = "2026.2.0-canary.2"
 
 [build-dependencies]
 # libvmaf C ヘッダから Rust バインディングを生成する
