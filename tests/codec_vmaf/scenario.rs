@@ -59,19 +59,25 @@ pub fn assert_quality_ordering(
 }
 
 pub fn run_aom_scenario(frames: &[I420Frame], expect: &QualityExpectation, content: &str) {
-    let (size_hi, decoded_hi) = encode_decode_aom(WIDTH, HEIGHT, high_bitrate_kbps(), frames);
-    let (size_lo, decoded_lo) = encode_decode_aom(WIDTH, HEIGHT, low_bitrate_kbps(), frames);
-    let hi = measure_roundtrip(WIDTH, HEIGHT, frames, size_hi, &decoded_hi);
-    let lo = measure_roundtrip(WIDTH, HEIGHT, frames, size_lo, &decoded_lo);
-    assert_quality_ordering("AOM", content, &hi, &lo, expect);
+    run_scenario("AOM", encode_decode_aom, frames, expect, content);
 }
 
 pub fn run_vp9_scenario(frames: &[I420Frame], expect: &QualityExpectation, content: &str) {
-    let (size_hi, decoded_hi) = encode_decode_vp9(WIDTH, HEIGHT, high_bitrate_kbps(), frames);
-    let (size_lo, decoded_lo) = encode_decode_vp9(WIDTH, HEIGHT, low_bitrate_kbps(), frames);
+    run_scenario("VP9", encode_decode_vp9, frames, expect, content);
+}
+
+fn run_scenario(
+    codec: &str,
+    encode_decode: EncodeDecodeFn,
+    frames: &[I420Frame],
+    expect: &QualityExpectation,
+    content: &str,
+) {
+    let (size_hi, decoded_hi) = encode_decode(WIDTH, HEIGHT, high_bitrate_kbps(), frames);
+    let (size_lo, decoded_lo) = encode_decode(WIDTH, HEIGHT, low_bitrate_kbps(), frames);
     let hi = measure_roundtrip(WIDTH, HEIGHT, frames, size_hi, &decoded_hi);
     let lo = measure_roundtrip(WIDTH, HEIGHT, frames, size_lo, &decoded_lo);
-    assert_quality_ordering("VP9", content, &hi, &lo, expect);
+    assert_quality_ordering(codec, content, &hi, &lo, expect);
 }
 
 pub fn assert_monotonic_bitrate_sweep(
@@ -95,6 +101,9 @@ pub fn assert_monotonic_bitrate_sweep(
         metrics.push(metric);
     }
 
+    // VMAF はビットレートに対して単調増加することを検証する。
+    // 符号化サイズは CBR エンコーダのパス選択により中間で逆転し得るため、
+    // サイズは最低と最高の両端のみ比較する。
     for window in metrics.windows(2) {
         let lo = &window[0];
         let hi = &window[1];

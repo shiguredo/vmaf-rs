@@ -19,4 +19,7 @@ test = false
 libfuzzer-sys = "0.4"
 
 [dependencies.shiguredo_vmaf]
+# ファジングのテスト対象クレート
 path = ".."
+# prebuilt がリリース前の開発中でもビルド検証できるようソースビルドを使う
+features = ["source-build"]

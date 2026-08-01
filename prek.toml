@@ -65,7 +65,6 @@ hooks = [
 [[repos]]
 repo = "local"
 
-# --all でワークスペース全体を対象にし、--check で書き換えずに未フォーマットを検出だけする
 [[repos.hooks]]
 id = "cargo-fmt"
 name = "cargo fmt"

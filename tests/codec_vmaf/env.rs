@@ -6,10 +6,13 @@ use crate::types::{
     scale_ref_bitrate_kbps,
 };
 
-/// カンマ区切り u32 一覧を環境変数から読み込む
-fn comma_separated_u32(name: &str) -> Option<Vec<u32>> {
+/// カンマ区切り数値一覧を環境変数から読み込む
+fn comma_separated<T>(name: &str) -> Option<Vec<T>>
+where
+    T: std::str::FromStr,
+{
     let raw = std::env::var(name).ok()?;
-    let values: Vec<u32> = raw
+    let values: Vec<T> = raw
         .split(',')
         .filter_map(|part| part.trim().parse().ok())
         .collect();
@@ -20,43 +23,25 @@ fn comma_separated_u32(name: &str) -> Option<Vec<u32>> {
     }
 }
 
-/// カンマ区切り f64 一覧を環境変数から読み込む
-fn comma_separated_f64(name: &str) -> Option<Vec<f64>> {
-    let raw = std::env::var(name).ok()?;
-    let values: Vec<f64> = raw
-        .split(',')
-        .filter_map(|part| part.trim().parse().ok())
-        .collect();
-    if values.is_empty() {
-        None
-    } else {
-        Some(values)
-    }
-}
-
-fn positive_u32_from_env(name: &str) -> Option<u32> {
+fn positive<T>(name: &str) -> Option<T>
+where
+    T: std::str::FromStr + PartialOrd + Default,
+{
     std::env::var(name)
         .ok()
         .and_then(|raw| raw.parse().ok())
-        .filter(|&value| value > 0)
-}
-
-fn positive_f64_from_env(name: &str) -> Option<f64> {
-    std::env::var(name)
-        .ok()
-        .and_then(|raw| raw.parse().ok())
-        .filter(|&value| value > 0.0)
+        .filter(|value| value > &T::default())
 }
 
 /// 192x108 向けのビットレート一覧 (`VMAF_BENCH_BITRATES` で上書き可能)
 pub fn bench_bitrates_for_test_resolution() -> Vec<u32> {
-    comma_separated_u32("VMAF_BENCH_BITRATES")
+    comma_separated("VMAF_BENCH_BITRATES")
         .unwrap_or_else(|| vec![low_bitrate_kbps(), mid_bitrate_kbps(), high_bitrate_kbps()])
 }
 
 /// 指定解像度向けのビットレート一覧 (`VMAF_BENCH_BITRATES` で上書き可能)
 pub fn bench_bitrates_for_resolution(width: u32, height: u32) -> Vec<u32> {
-    comma_separated_u32("VMAF_BENCH_BITRATES").unwrap_or_else(|| {
+    comma_separated("VMAF_BENCH_BITRATES").unwrap_or_else(|| {
         vec![
             scale_ref_bitrate_kbps(width, height, 300),
             scale_ref_bitrate_kbps(width, height, 800),
@@ -93,25 +78,25 @@ pub fn y4m_path_from_env() -> PathBuf {
 }
 
 pub fn bench_frames_from_env() -> usize {
-    positive_u32_from_env("VMAF_BENCH_FRAMES")
+    positive::<u32>("VMAF_BENCH_FRAMES")
         .map(|count| count as usize)
         .unwrap_or(30)
 }
 
 pub fn match_targets_from_env() -> Vec<f64> {
-    comma_separated_f64("VMAF_MATCH_TARGETS").unwrap_or_else(|| vec![90.0])
+    comma_separated("VMAF_MATCH_TARGETS").unwrap_or_else(|| vec![90.0])
 }
 
 pub fn match_min_kbps_from_env() -> u32 {
-    positive_u32_from_env("VMAF_MATCH_MIN_KBPS").unwrap_or(200)
+    positive("VMAF_MATCH_MIN_KBPS").unwrap_or(200)
 }
 
 pub fn match_max_kbps_from_env() -> u32 {
-    positive_u32_from_env("VMAF_MATCH_MAX_KBPS").unwrap_or(6000)
+    positive("VMAF_MATCH_MAX_KBPS").unwrap_or(6000)
 }
 
 pub fn match_tolerance_from_env() -> f64 {
-    positive_f64_from_env("VMAF_MATCH_TOLERANCE").unwrap_or(0.5)
+    positive("VMAF_MATCH_TOLERANCE").unwrap_or(0.5)
 }
 
 /// 1080p 基準の探索上限 kbps を面積比で解像度に合わせる

@@ -3,7 +3,16 @@ name: Release
 on:
   push:
     tags:
-      - "*"
+      - "[0-9][0-9][0-9][0-9].[0-9]+.[0-9]*"
+
+# deny-by-default の最小権限をトップレベルに置き、必要なジョブで明示的に昇格する
+permissions:
+  contents: read
+
+# リリースは 1 本ずつ直列化する (途中キャンセルは壊れるため cancel-in-progress は無効)
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 env:
   RUST_BACKTRACE: 1
@@ -12,6 +21,10 @@ jobs:
   github-release:
     name: "Create GitHub Release"
     runs-on: ubuntu-latest
+    # gh release create は contents: write を必要とする
+    permissions:
+      contents: write
+    timeout-minutes: 10
     outputs:
       version: ${{ steps.get_version.outputs.VERSION }}
     steps:
@@ -20,19 +33,41 @@ jobs:
 
       - name: Get the version
         id: get_version
-        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\//}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate tag format and version match
+        shell: bash
+        run: |
+          VERSION="${{ steps.get_version.outputs.VERSION }}"
+          PKG_VERSION=$(cargo metadata --format-version 1 | jq -r '.packages[0].version')
+
+          if [[ "$VERSION" =~ ^[0-9]{4}\.[0-9]+\.[0-9]+-canary\.[0-9]+$ ]]; then
+            BASE_VERSION="${VERSION%-canary.*}"
+            if [[ "$BASE_VERSION" != "$PKG_VERSION" ]]; then
+              echo "error: canary base version '${BASE_VERSION}' does not match Cargo.toml '${PKG_VERSION}'"
+              exit 1
+            fi
+          elif [[ "$VERSION" =~ ^[0-9]{4}\.[0-9]+\.[0-9]+$ ]]; then
+            if [[ "$VERSION" != "$PKG_VERSION" ]]; then
+              echo "error: tag '${VERSION}' does not match Cargo.toml version '${PKG_VERSION}'"
+              exit 1
+            fi
+          else
+            echo "error: tag '${VERSION}' does not match expected format (YYYY.MM.PP or YYYY.MM.PP-canary.N)"
+            exit 1
+          fi
 
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ${{ contains(steps.get_version.outputs.VERSION, 'canary') }}; then
-            gh release create ${{ steps.get_version.outputs.VERSION }} \
+            gh release create "${{ steps.get_version.outputs.VERSION }}" \
               --prerelease \
               --title "${{ steps.get_version.outputs.VERSION }}" \
               --notes "Release ${{ steps.get_version.outputs.VERSION }}"
           else
-            gh release create ${{ steps.get_version.outputs.VERSION }} \
+            gh release create "${{ steps.get_version.outputs.VERSION }}" \
               --title "${{ steps.get_version.outputs.VERSION }}" \
               --notes "Release ${{ steps.get_version.outputs.VERSION }}"
           fi
@@ -40,6 +75,8 @@ jobs:
   build-prebuilt:
     name: "Build prebuilt (${{ matrix.target }})"
     needs: github-release
+    # canary タグでは prebuilt URL とタグ名が一致しないためビルドしない
+    if: ${{ !contains(needs.github-release.outputs.version, 'canary') }}
     permissions:
       contents: write
     strategy:
@@ -66,6 +103,8 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
+      - run: rustup update stable
+
       - name: Install build dependencies (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y build-essential meson ninja-build xxd
@@ -85,11 +124,13 @@ jobs:
 
       - name: Find OUT_DIR
         id: find_out_dir
+        shell: bash
         run: |
-          OUT_DIR=$(find target/release/build/shiguredo_vmaf-*/out -maxdepth 0 -type d 2>/dev/null | head -1)
-          echo "OUT_DIR=${OUT_DIR}" >> $GITHUB_OUTPUT
+          OUT_DIR=$(find target/release/build/shiguredo_vmaf-*/out -maxdepth 0 -type d 2>/dev/null | sort | head -1)
+          echo "OUT_DIR=${OUT_DIR}" >> "$GITHUB_OUTPUT"
 
       - name: Create prebuilt archive
+        shell: bash
         run: |
           OUT_DIR="${{ steps.find_out_dir.outputs.OUT_DIR }}"
           SRC_DIR="$OUT_DIR/build/vmaf/libvmaf/build/src"
@@ -99,6 +140,7 @@ jobs:
           tar czf vmaf-${{ matrix.target }}.tar.gz -C staging .
 
       - name: Generate SHA256 checksum
+        shell: bash
         run: |
           if command -v sha256sum &> /dev/null; then
             sha256sum vmaf-${{ matrix.target }}.tar.gz > vmaf-${{ matrix.target }}.tar.gz.sha256
@@ -109,16 +151,20 @@ jobs:
       - name: Upload prebuilt archive
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
         run: |
-          gh release upload ${{ needs.github-release.outputs.version }} \
+          gh release upload "${{ needs.github-release.outputs.version }}" \
             vmaf-${{ matrix.target }}.tar.gz \
             vmaf-${{ matrix.target }}.tar.gz.sha256 \
             --clobber
 
   publish:
     needs: [github-release, build-prebuilt]
+    # canary タグは crates.io に publish しない
+    if: ${{ !contains(needs.github-release.outputs.version, 'canary') }}
     runs-on: ubuntu-24.04
     environment: release
+    timeout-minutes: 15
     permissions:
       id-token: write
     steps:
@@ -131,14 +177,14 @@ jobs:
 
   slack_notify:
     needs: [github-release, build-prebuilt, publish]
-    timeout-minutes: 20
-    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    runs-on: ubuntu-24.04
     if: ${{ always() }}
     permissions:
       actions: read
     steps:
       - name: Slack Notification
-        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        uses: shiguredo/github-actions/.github/actions/slack-notify@145407fb88527b7068762db72480c1f55715e0b1 # main 2026-06-06
         with:
           status: ${{ job.status }}
           slack_webhook: ${{ secrets.SLACK_WEBHOOK }}

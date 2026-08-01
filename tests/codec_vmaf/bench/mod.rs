@@ -7,7 +7,7 @@ use crate::env::{
     match_min_kbps_from_env, match_targets_from_env, match_tolerance_from_env, y4m_path_from_env,
 };
 use crate::types::{Codec, I420Frame, MatchedBitrateResult};
-use crate::y4m::{read_y4m_420_frames, require_y4m_path};
+use crate::y4m::{read_y4m_420_frames, y4m_path_or_skip};
 
 pub(crate) const ENCODER_PROFILE_LABEL: &str = "Realtime encoder profile";
 
@@ -45,7 +45,11 @@ pub fn run_synthetic_bench() {
 
 /// Y4M クリップ向けローカルベンチのエントリポイント
 pub fn run_y4m_bench() {
-    let path = require_y4m_path(y4m_path_from_env());
+    let path = y4m_path_from_env();
+    if let Err(message) = y4m_path_or_skip(path.clone()) {
+        eprintln!("{message}");
+        return;
+    }
     let max_frames = bench_frames_from_env();
     let (width, height, _) = read_y4m_420_frames(&path, 1).expect("Y4M ヘッダの読み込みに失敗");
     let bitrates = bench_bitrates_for_resolution(width, height);
@@ -54,7 +58,11 @@ pub fn run_y4m_bench() {
 
 /// Y4M クリップ向け目標 VMAF 探索のエントリポイント
 pub fn run_y4m_match() {
-    let path = require_y4m_path(y4m_path_from_env());
+    let path = y4m_path_from_env();
+    if let Err(message) = y4m_path_or_skip(path.clone()) {
+        eprintln!("{message}");
+        return;
+    }
     match_vmaf::run_y4m_matched_vmaf_report(
         &path,
         bench_frames_from_env(),

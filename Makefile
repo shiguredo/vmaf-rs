@@ -24,7 +24,6 @@ codec-bench-all:
 cover:
 	cargo llvm-cov --tests --workspace --features source-build
 
-# cargo check を実行する
 check:
 	cargo check --lib --features source-build
 
@@ -36,10 +35,8 @@ clippy:
 clippy-all:
 	cargo clippy --workspace --all-targets --features source-build -- -D warnings
 
-# cargo fmt を実行する
 fmt:
 	cargo fmt --all
 
-# ビルド成果物を削除する
 clean:
 	cargo clean

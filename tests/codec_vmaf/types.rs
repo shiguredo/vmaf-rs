@@ -94,6 +94,13 @@ pub struct RoundtripMetrics {
 }
 
 /// コンテンツ種別ごとの VMAF / サイズ期待値
+///
+/// 閾値は libvmaf v3.2.0 での実測値を基にマージンを取っている。
+/// 実測 (192x108, AOM/VP9 リアルタイム CBR):
+///   - AOM/static:  hi=95.36, lo=85.09 (delta=10.27, ratio=1.66)
+///   - AOM/motion:  hi=88.48, lo=72.25 (delta=16.23, ratio=1.15)
+///   - VP9/static:  hi=97.89, lo=94.64 (delta=3.24,  ratio=1.32)
+///   - VP9/motion:  hi=91.92, lo=80.79 (delta=11.13, ratio=1.29)
 pub struct QualityExpectation {
     pub min_hi_vmaf: f64,
     pub max_lo_vmaf: f64,

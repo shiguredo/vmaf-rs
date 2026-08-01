@@ -46,7 +46,8 @@ fn vp9_動画_高品質は符号化サイズが大きく_vmaf_も高い() {
 }
 
 #[test]
-fn リアルタイム符号化_動画_ビットレートスイープで符号化サイズと_vmaf_が単調増加する() {
+fn リアルタイム符号化_動画_ビットレート上昇で_vmaf_が単調増加し最高ビットレートの符号化サイズが最大になる()
+ {
     let frames = generate_motion_sequence(MOTION_FRAME_COUNT, WIDTH as usize, HEIGHT as usize);
     let bitrates = [low_bitrate_kbps(), mid_bitrate_kbps(), high_bitrate_kbps()];
 

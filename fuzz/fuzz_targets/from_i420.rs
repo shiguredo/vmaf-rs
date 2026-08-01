@@ -5,34 +5,30 @@ use shiguredo_vmaf::Picture;
 
 /// from_i420 のパニック安全性を検証する Fuzz ターゲット。
 ///
-/// 任意の &[u8] 入力を y/u/v スライスと width/height に分割して from_i420 に渡す。
-/// width / height には上限（4096）を設け、libvmaf の実メモリ確保による OOM を防ぐ。
-/// width / height が 0 になることは許容する（上限付き剰余の自然な結果であり、
-/// ゼロ寸法での libvmaf の挙動も fuzz の探索範囲として有意義なため）。
+/// 先頭 2 バイトから width / height を生成し (偶数化 + 上限 512 で vmaf_picture_alloc
+/// の実メモリ確保による OOM を防ぐ)、残りを y / u / v プレーンへ順に割り当てる。
+/// データが不足すればサイズ不一致エラー、十分なら Ok 経路 (vmaf_picture_alloc /
+/// copy_plane / ptr::copy_nonoverlapping) に到達する。
 /// nightly 専用のため stable CI では実行されない。手動実行:
 ///   cargo +nightly fuzz run from_i420
-///
-/// y/u/v の分割方法: 先頭 8 バイトから width/height/y_len/u_len を抽出し、
-/// 残りを y_len 分 → u_len 分 → 残りすべてを v の順で消費する。
-/// y/u の切り出しが大きいと v が小さくなるが、入力空間の多様性は fuzzer の
-/// mutation がカバーするため問題ない。
-fuzz_target!(|data: &[u8]| {
-    if data.len() < 8 {
+fn fuzz(data: &[u8]) {
+    if data.len() < 2 {
         return;
     }
 
-    let w = u32::from_le_bytes([data[0], data[1], 0, 0]) % 4096;
-    let h = u32::from_le_bytes([data[2], data[3], 0, 0]) % 4096;
+    let w = u32::from(data[0]) * 2 % 1024;
+    let h = u32::from(data[1]) * 2 % 1024;
 
-    let y_len = u32::from_le_bytes([data[4], data[5], 0, 0]) as usize % 4096;
-    let u_len = u32::from_le_bytes([data[6], data[7], 0, 0]) as usize % 4096;
+    let y_size = (w as usize) * (h as usize);
+    let uv_size = ((w / 2) as usize) * ((h / 2) as usize);
 
-    let rest = &data[8..];
-    let y = &rest.get(..y_len.min(rest.len())).unwrap_or(&[]);
-    let after_y = &rest.get(y.len()..).unwrap_or(&[]);
-    let u = &after_y.get(..u_len.min(after_y.len())).unwrap_or(&[]);
-    let after_u = &after_y.get(u.len()..).unwrap_or(&[]);
-    let v = after_u;
+    let y = &data[2..];
+    let y = &y[..y_size.min(y.len())];
+    let after_y = &data[2 + y.len()..];
+    let u = &after_y[..uv_size.min(after_y.len())];
+    let v = &after_y[u.len()..];
 
     let _ = Picture::from_i420(y, u, v, w, h);
-});
+}
+
+fuzz_target!(|data: &[u8]| fuzz(data));

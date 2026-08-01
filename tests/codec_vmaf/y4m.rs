@@ -101,12 +101,16 @@ pub fn read_y4m_420_frames(
     Ok((width, height, frames))
 }
 
-pub fn require_y4m_path(path: PathBuf) -> PathBuf {
-    if !path.is_file() {
-        panic!(
-            "Y4M ファイルが見つからない: {} (VMAF_Y4M_PATH を設定するか local_videos/ に rush_hour を配置してください)",
+/// Y4M ファイルの存在を確認し、無ければスキップ用のエラーメッセージを返す
+///
+/// ローカル試行用ベンチのため、ファイルが無い環境でも全テストが通るようにする。
+pub fn y4m_path_or_skip(path: PathBuf) -> Result<PathBuf, String> {
+    if path.is_file() {
+        Ok(path)
+    } else {
+        Err(format!(
+            "Y4M ファイルが見つからないためスキップ: {} (VMAF_Y4M_PATH を設定するか local_videos/ に rush_hour を配置してください)",
             path.display()
-        );
+        ))
     }
-    path
 }

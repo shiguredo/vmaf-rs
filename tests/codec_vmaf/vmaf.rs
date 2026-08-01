@@ -40,7 +40,7 @@ pub fn vmaf_scores_i420(
     (0..reference.len())
         .map(|index| {
             ctx.score_at_index(&model, index as u32)
-                .unwrap_or_else(|_| panic!("score_at_index({index}) に失敗"))
+                .expect("score_at_index に失敗")
         })
         .collect()
 }
@@ -52,8 +52,7 @@ pub fn measure_roundtrip(
     encoded_size: usize,
     decoded: &[DecodedI420],
 ) -> RoundtripMetrics {
-    let distorted: Vec<I420Frame> = decoded.to_vec();
-    let scores = vmaf_scores_i420(reference, &distorted, width, height);
+    let scores = vmaf_scores_i420(reference, decoded, width, height);
     let avg_vmaf = scores.iter().sum::<f64>() / scores.len() as f64;
     let min_vmaf = scores.iter().copied().fold(f64::INFINITY, f64::min);
 

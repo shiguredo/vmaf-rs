@@ -25,7 +25,7 @@ fn ensure_encoding_supported(hevc: bool) {
         .any(|info| info.codec == codec_type && info.encoding.supported);
     assert!(
         supported,
-        "{label} hardware encoding is not supported on this Mac"
+        "{label} のハードウェアエンコードはこの Mac でサポートされていない"
     );
 }
 
@@ -232,7 +232,7 @@ fn encode_video_toolbox(
     }
 
     let encoded_size: usize = packets.iter().map(|packet| packet.data.len()).sum();
-    assert!(!packets.is_empty(), "{label} encoded packets are empty");
+    assert!(!packets.is_empty(), "{label} の符号化パケットが空");
 
     let decoded = if hevc {
         decode_hevc_packets(&packets)
@@ -242,7 +242,7 @@ fn encode_video_toolbox(
     assert_eq!(
         decoded.len(),
         frames.len(),
-        "{label} decoded frame count mismatch: got {}, expected {}",
+        "{label} デコードフレーム数が一致しない: got {}, expected {}",
         decoded.len(),
         frames.len()
     );

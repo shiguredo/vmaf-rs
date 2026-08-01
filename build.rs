@@ -20,28 +20,13 @@ fn main() {
 
     // 各種変数やビルドディレクトリのセットアップ
     let out_dir = PathBuf::from(env::var_os("OUT_DIR").expect("infallible"));
-    let output_metadata_path = out_dir.join("metadata.rs");
     let output_bindings_path = out_dir.join("bindings.rs");
-
-    // 各種メタデータを書き込む
-    let (git_url, version) = get_git_url_and_version();
-    fs::write(
-        output_metadata_path,
-        format!(
-            concat!(
-                "pub const BUILD_METADATA_REPOSITORY: &str={:?};\n",
-                "pub const BUILD_METADATA_VERSION: &str={:?};\n",
-            ),
-            git_url, version
-        ),
-    )
-    .expect("failed to write metadata file");
 
     if env::var("DOCS_RS").is_ok() {
         // Docs.rs 向けのビルドでは git clone ができないので build.rs の処理はスキップして、
         // 代わりに、ドキュメント生成時に最低限必要な構造体だけをダミーで出力している。
         //
-        // See also: https://docs.rs/about/builds
+        // 参考: https://docs.rs/about/builds
         fs::write(
             output_bindings_path,
             r#"
@@ -50,7 +35,7 @@ fn main() {
 // docs.rs ビルドは libvmaf を clone・リンクできないため、本体 (src/lib.rs) が参照する
 // 型・フィールド・定数・関数だけをダミーで定義してドキュメント生成と型チェックを通す。
 // docs.rs ビルドは libvmaf にリンクせず関数本体も実行しないが、型・フィールドの順序と
-// サイズを bindgen が生成する実 bindings (libvmaf v3.1.0) に一致させることで、
+// サイズを bindgen が生成する実 bindings (libvmaf v3.2.0) に一致させることで、
 // 本体との型整合と保守時の乖離防止を図る。
 // libvmaf の更新で構造体が変わる可能性があるため、CI の docs-rs ジョブで
 // cargo build --lib によりこのダミーと src/lib.rs の型整合を検証する

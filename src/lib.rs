@@ -24,12 +24,6 @@ pub fn version() -> &'static str {
     }
 }
 
-/// ビルド時に参照したリポジトリ URL
-pub const BUILD_REPOSITORY: &str = sys::BUILD_METADATA_REPOSITORY;
-
-/// ビルド時に参照したリポジトリのバージョン（タグ）
-pub const BUILD_VERSION: &str = sys::BUILD_METADATA_VERSION;
-
 /// libvmaf に組み込まれた VMAF モデル
 ///
 /// libvmaf ヘッダにはモデル一覧 API がないため、Rust 側で定数化している。
@@ -113,9 +107,14 @@ pub struct ContextConfig {
     pub n_threads: u32,
     /// N フレームごとにスコアを計算する (デフォルト: 1 = 全フレーム)
     pub n_subsample: u32,
-    /// CPU affinity マスク (デフォルト: 0 = libvmaf が自動決定)
+    /// CPU 命令セット制限マスク (デフォルト: 0 = 制限なし)
+    ///
+    /// libvmaf は `~cpumask` を CPU flags mask として設定する。ビットが立っている命令セットが
+    /// 無効化されるため、affinity マスクではない。
     pub cpumask: u64,
-    /// GPU affinity マスク (デフォルト: 0 = libvmaf が自動決定)
+    /// GPU 操作制限マスク (デフォルト: 0 = 制限なし)
+    ///
+    /// libvmaf は非ゼロで CUDA を無効化する。affinity マスクではない。
     pub gpumask: u64,
 }
 
@@ -227,7 +226,9 @@ impl Context {
     /// 参照 / 劣化フレームのペアを読み込む
     ///
     /// `reference` と `distorted` の両方が `None` の場合、内部バッファをフラッシュする。
-    /// フラッシュ後はこれ以上 `read_pictures` を呼び出せない。
+    /// フラッシュ後はこれ以上 `read_pictures` を呼び出せない (呼び出すと `InvalidInput`)。
+    /// フラッシュ前に最低 1 フレームのペアを読み込んでいる必要がある。
+    /// 片方だけ `Some` を渡した場合は libvmaf が `Error::Ffi` を返す。
     ///
     /// 成功した場合のみ libvmaf が `Picture` の所有権を取得する。エラーを返した場合は
     /// libvmaf 側で unref されないため、渡した `Picture` が drop 時に破棄され、リークを防ぐ。
@@ -274,6 +275,9 @@ impl Context {
     }
 
     /// 指定インデックスの VMAF スコアを取得する
+    ///
+    /// スコア取得は `read_pictures(None, None, 0)` による flush の後に呼ぶこと。
+    /// flush 前は temporal feature が未生成のため libvmaf がエラーを返す場合がある。
     pub fn score_at_index(&self, model: &Model, index: u32) -> Result<f64, Error> {
         let mut score = 0.0;
         Error::check(
@@ -286,8 +290,12 @@ impl Context {
     /// 指定範囲のフレームをプールした VMAF スコアを取得する
     ///
     /// `index_low` と `index_high` はプール対象フレーム範囲（両端 inclusive）。
+    /// `index_low` が `index_high` より大きい場合は `Error::Ffi` を返す。
     /// クリップ全体のスコアを取得するには、読み込んだ最終フレームの index を
     /// `index_high` に渡すこと。
+    ///
+    /// スコア取得は `read_pictures(None, None, 0)` による flush の後に呼ぶこと。
+    /// flush 前は temporal feature が未生成のため libvmaf がエラーを返す場合がある。
     pub fn score_pooled(
         &self,
         model: &Model,
