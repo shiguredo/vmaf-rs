@@ -42,13 +42,13 @@ fn generate_degraded_i420(
 }
 
 #[test]
-fn version_文字列が空でない() {
+fn version_is_not_empty() {
     let v = version();
     assert!(!v.is_empty(), "version() が空文字列を返した");
 }
 
 #[test]
-fn 同一フレームの_vmaf_スコアは高得点() {
+fn same_frame_vmaf_score_is_high() {
     let width = 192;
     let height = 108;
     let (y, u, v) = generate_dummy_i420(width, height, 0);
@@ -77,7 +77,7 @@ fn 同一フレームの_vmaf_スコアは高得点() {
 }
 
 #[test]
-fn 劣化フレームの_vmaf_スコアは低得点() {
+fn degraded_frame_vmaf_score_is_low() {
     let width = 192;
     let height = 108;
     let (ref_y, ref_u, ref_v) = generate_dummy_i420(width, height, 0);
@@ -106,7 +106,7 @@ fn 劣化フレームの_vmaf_スコアは低得点() {
 }
 
 #[test]
-fn read_pictures_は_flush_後に呼ぶと_エラーを返す() {
+fn read_pictures_after_flush_returns_error() {
     let width = 192;
     let height = 108;
     let (y, u, v) = generate_dummy_i420(width, height, 0);
@@ -138,7 +138,7 @@ fn read_pictures_は_flush_後に呼ぶと_エラーを返す() {
 }
 
 #[test]
-fn score_pooled_は_index_逆転で_ffi_エラーを返す() {
+fn score_pooled_with_reversed_index_returns_ffi_error() {
     let width = 192;
     let height = 108;
     let (y, u, v) = generate_dummy_i420(width, height, 0);
@@ -170,7 +170,7 @@ fn score_pooled_は_index_逆転で_ffi_エラーを返す() {
 }
 
 #[test]
-fn read_pictures_は寸法不一致で_ffi_エラーを返す() {
+fn read_pictures_with_dimension_mismatch_returns_ffi_error() {
     // 参照 (64x64) と劣化 (32x32) で寸法が異なると、libvmaf の validate_pic_params が
     // ref と dist の寸法不一致を検出し read_pictures がエラーを返す。
     // このエラー経路で渡した Picture が drop 時に unref され、リークしないことが本修正の狙い。
@@ -200,7 +200,7 @@ fn read_pictures_は寸法不一致で_ffi_エラーを返す() {
 }
 
 #[test]
-fn read_pictures_はスレッド設定でも寸法不一致でエラーを返す() {
+fn read_pictures_with_dimension_mismatch_returns_error_with_threads() {
     // n_threads>0 でスレッドプール付き Context を生成する。寸法不一致は
     // validate_pic_params で早期に弾かれるため threaded_read_pictures_batch までは
     // 到達しないが、スレッド設定の Context でも read_pictures がエラー時に
@@ -234,7 +234,7 @@ fn read_pictures_はスレッド設定でも寸法不一致でエラーを返す
 }
 
 #[test]
-fn from_i420_はゼロ寸法を拒否する() {
+fn from_i420_rejects_zero_dimensions() {
     // ゼロ寸法は確定境界値のため単体テストで検証する (PBT では生成確率が低く、
     // 全ケースでゼロ寸法が生成されない可能性がある)。
     for (w, h) in [(0, 2), (2, 0), (0, 0)] {
@@ -247,7 +247,7 @@ fn from_i420_はゼロ寸法を拒否する() {
 }
 
 #[test]
-fn 複数フレームを_mean_でプールできる() {
+fn multiple_frames_can_be_pooled_with_mean() {
     let width = 192;
     let height = 108;
     let frame_count: u32 = 3;
@@ -289,7 +289,7 @@ fn 複数フレームを_mean_でプールできる() {
 }
 
 #[test]
-fn builtin_model_のバージョン文字列が正しい() {
+fn builtin_model_version_string_is_correct() {
     assert_eq!(BuiltinModel::V061.version_str(), "vmaf_v0.6.1");
     assert_eq!(BuiltinModel::BV063.version_str(), "vmaf_b_v0.6.3");
     assert_eq!(BuiltinModel::V061Neg.version_str(), "vmaf_v0.6.1neg");
@@ -298,7 +298,7 @@ fn builtin_model_のバージョン文字列が正しい() {
 }
 
 #[test]
-fn 全組み込みモデルをロードできる() {
+fn all_builtin_models_can_be_loaded() {
     // BV063 (vmaf_b_v0.6.3) はフリービルド版 libvmaf に含まれていないため除外
     let models = [
         (BuiltinModel::V061, "V061"),
@@ -320,7 +320,7 @@ fn 全組み込みモデルをロードできる() {
 }
 
 #[test]
-fn 全ログレベルでコンテキストを生成できる() {
+fn context_can_be_created_with_all_log_levels() {
     for level in [
         LogLevel::None,
         LogLevel::Error,
@@ -337,7 +337,7 @@ fn 全ログレベルでコンテキストを生成できる() {
 }
 
 #[test]
-fn 複数フレームを全プーリングメソッドで集計できる() {
+fn multiple_frames_can_be_pooled_with_all_methods() {
     let width = 192;
     let height = 108;
     let frame_count: u32 = 3;
@@ -397,13 +397,13 @@ fn 複数フレームを全プーリングメソッドで集計できる() {
 }
 
 #[test]
-fn error_invalid_input_の表示が正しい() {
+fn error_invalid_input_display_is_correct() {
     let err = Error::InvalidInput("テストメッセージ");
     assert!(err.to_string().contains("テストメッセージ"));
 }
 
 #[test]
-fn error_ffi_の表示が正しい() {
+fn error_ffi_display_is_correct() {
     let err = Error::Ffi {
         code: -1,
         function: "test_func",
@@ -420,7 +420,7 @@ fn error_ffi_の表示が正しい() {
 }
 
 #[test]
-fn error_は_std_error_トレイトを実装している() {
+fn error_implements_std_error_trait() {
     let err = Error::InvalidInput("テスト");
     let _: &dyn std::error::Error = &err;
 }

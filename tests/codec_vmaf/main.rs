@@ -22,32 +22,31 @@ use types::{
 };
 
 #[test]
-fn aom_静止画_高品質は符号化サイズが大きく_vmaf_も高い() {
+fn aom_static_high_quality_has_larger_size_and_higher_vmaf() {
     let frames = generate_static_sequence(1, WIDTH as usize, HEIGHT as usize);
     run_aom_scenario(&frames, &STATIC_EXPECT, "static");
 }
 
 #[test]
-fn aom_動画_高品質は符号化サイズが大きく_vmaf_も高い() {
+fn aom_motion_high_quality_has_larger_size_and_higher_vmaf() {
     let frames = generate_motion_sequence(MOTION_FRAME_COUNT, WIDTH as usize, HEIGHT as usize);
     run_aom_scenario(&frames, &MOTION_EXPECT, "motion");
 }
 
 #[test]
-fn vp9_静止画_高品質は符号化サイズが大きく_vmaf_も高い() {
+fn vp9_static_high_quality_has_larger_size_and_higher_vmaf() {
     let frames = generate_static_sequence(1, WIDTH as usize, HEIGHT as usize);
     run_vp9_scenario(&frames, &STATIC_EXPECT, "static");
 }
 
 #[test]
-fn vp9_動画_高品質は符号化サイズが大きく_vmaf_も高い() {
+fn vp9_motion_high_quality_has_larger_size_and_higher_vmaf() {
     let frames = generate_motion_sequence(MOTION_FRAME_COUNT, WIDTH as usize, HEIGHT as usize);
     run_vp9_scenario(&frames, &MOTION_EXPECT, "motion");
 }
 
 #[test]
-fn リアルタイム符号化_動画_ビットレート上昇で_vmaf_が単調増加し最高ビットレートの符号化サイズが最大になる()
- {
+fn realtime_motion_vmaf_increases_monotonically_with_bitrate() {
     let frames = generate_motion_sequence(MOTION_FRAME_COUNT, WIDTH as usize, HEIGHT as usize);
     let bitrates = [low_bitrate_kbps(), mid_bitrate_kbps(), high_bitrate_kbps()];
 
@@ -56,7 +55,7 @@ fn リアルタイム符号化_動画_ビットレート上昇で_vmaf_が単調
 }
 
 #[test]
-fn 低品質_動画の符号化サイズは静止画より大きい() {
+fn low_quality_motion_size_is_larger_than_static_size() {
     let static_frames = generate_static_sequence(1, WIDTH as usize, HEIGHT as usize);
     let motion_frames =
         generate_motion_sequence(MOTION_FRAME_COUNT, WIDTH as usize, HEIGHT as usize);
@@ -79,21 +78,21 @@ fn 低品質_動画の符号化サイズは静止画より大きい() {
 /// make codec-bench
 /// # または
 /// VMAF_BENCH_BITRATES=7,18,34,100 cargo test --features source-build \
-///   --test codec_vmaf local_vmaf_ベンチレポート -- --nocapture
+///   --test codec_vmaf local_vmaf_bench_report -- --nocapture
 /// ```
 #[test]
-fn local_vmaf_ベンチレポート() {
+fn local_vmaf_bench_report() {
     bench::run_synthetic_bench();
 }
 
 /// ローカル Y4M 試行。`local_videos/` に実クリップを置いて実行する。
 ///
 /// ```bash
-/// cargo test --features source-build --test codec_vmaf local_vmaf_y4m_ベンチレポート -- --nocapture
+/// cargo test --features source-build --test codec_vmaf local_vmaf_y4m_bench_report -- --nocapture
 /// VMAF_BENCH_FRAMES=10 VMAF_BENCH_BITRATES=675,1800,3375 cargo test ...
 /// ```
 #[test]
-fn local_vmaf_y4m_ベンチレポート() {
+fn local_vmaf_y4m_bench_report() {
     bench::run_y4m_bench();
 }
 
@@ -104,6 +103,6 @@ fn local_vmaf_y4m_ベンチレポート() {
 /// VMAF_MATCH_TARGETS=90 VMAF_BENCH_RESOLUTIONS=1080p,720p,540p cargo test ...
 /// ```
 #[test]
-fn local_vmaf_y4m_同一スコアビットレート探索() {
+fn local_vmaf_y4m_same_score_bitrate_search() {
     bench::run_y4m_match();
 }

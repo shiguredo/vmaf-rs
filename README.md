@@ -126,7 +126,7 @@ println!("VMAF score: {score}");
 | 変数 | 説明 |
 |---|---|
 | `VMAF_TARGET` | prebuilt バイナリのプラットフォーム名を明示的に指定する |
-| `VMAF_BENCH_BITRATES` | ローカルベンチ (`local_vmaf_ベンチレポート`) のビットレート一覧 (kbps, カンマ区切り。例: `7,18,34,100`) |
+| `VMAF_BENCH_BITRATES` | ローカルベンチ (`local_vmaf_bench_report`) のビットレート一覧 (kbps, カンマ区切り。例: `7,18,34,100`) |
 
 ## ローカルでのコーデック + VMAF 試行
 

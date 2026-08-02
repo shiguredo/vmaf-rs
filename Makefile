@@ -10,11 +10,11 @@ test-quick:
 
 # ローカル試行: コンテンツ × コーデック × ビットレートの表を出力 (assert なし)
 codec-bench:
-	cargo test --features source-build --test codec_vmaf local_vmaf_ベンチレポート -- --nocapture
+	cargo test --features source-build --test codec_vmaf local_vmaf_bench_report -- --nocapture
 
 # ローカル試行: 目標 VMAF ごとに AOM / VP9 の kbps を二分探索
 codec-match:
-	cargo test --features source-build --test codec_vmaf local_vmaf_y4m_同一スコアビットレート探索 -- --nocapture
+	cargo test --features source-build --test codec_vmaf local_vmaf_y4m_same_score_bitrate_search -- --nocapture
 
 # 統合テスト一式 + レポート
 codec-bench-all:
