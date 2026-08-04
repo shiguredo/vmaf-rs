@@ -1,0 +1,25 @@
+[package]
+name = "vmaf-rs-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[[bin]]
+bench = false
+doc = false
+name = "from_i420"
+path = "fuzz_targets/from_i420.rs"
+test = false
+
+[dependencies]
+# cargo-fuzz によるファジング用ランタイム
+libfuzzer-sys = "0.4"
+
+[dependencies.shiguredo_vmaf]
+# ファジングのテスト対象クレート
+path = ".."
+# prebuilt がリリース前の開発中でもビルド検証できるようソースビルドを使う
+features = ["source-build"]

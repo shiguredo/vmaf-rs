@@ -1,0 +1,12 @@
+target/
+*.y4m
+*.yuv
+local_videos/
+tmp_vmaf/
+
+# Agents
+.claude/
+.codex/
+
+# macOS
+.DS_Store
