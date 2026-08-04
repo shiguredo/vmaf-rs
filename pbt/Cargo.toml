@@ -10,7 +10,7 @@ shiguredo_vmaf = { path = ".." }
 
 [dev-dependencies]
 # PBT (Property-Based Testing)
-proptest = "1.6"
+proptest = "1.11"
 
 [features]
 source-build = ["shiguredo_vmaf/source-build"]
