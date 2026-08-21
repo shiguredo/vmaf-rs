@@ -74,16 +74,6 @@ types = ["rust"]
 pass_filenames = false
 priority = 0
 
-# pre-commit の実行時間を抑えるため --lib に限定する (--all-targets は CI / Makefile の clippy-all で担保)
-[[repos.hooks]]
-id = "cargo-clippy"
-name = "cargo clippy"
-entry = "cargo clippy --lib --features source-build -- -D warnings"
-language = "system"
-types = ["rust"]
-pass_filenames = false
-priority = 10
-
 # cargo test: コミットを遅くしないため pre-push でだけ実行する
 # codec_vmaf は重い統合テストのため除外し、CI で実行する
 [[repos.hooks]]
